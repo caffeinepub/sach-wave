@@ -1,5 +1,5 @@
 {
-  "frontend/src/App.tsx": "Main application component with splash screen, onboarding flow, resilient startup gate, and routing for authenticated and unauthenticated users including new Stories and Settings routes.",
+  "frontend/src/App.tsx": "Main application component with splash screen, onboarding flow, resilient startup gate using the patched actor hook, and routing for authenticated and unauthenticated users.",
   "frontend/src/components/system/ErrorBoundary.tsx": "React error boundary component that catches JavaScript errors anywhere in the child component tree and displays a fallback UI with error details and recovery options.",
   "frontend/src/components/system/PageState.tsx": "Reusable UI state components for loading, error, empty, and skeleton states to ensure consistent non-blank screen handling across the application.",
   "frontend/src/pages/admin/AdminDashboardPage.tsx": "Admin dashboard page with tabs for user management, post moderation, and announcements; updated to use UserRole enum for checking banned/owner/admin status instead of deprecated boolean properties.",
@@ -8,7 +8,7 @@
   "frontend/src/pages/stories/StoryViewerPage.tsx": "Fullscreen story viewer with role badges in author header, gradient progress indicators, navigation controls, and premium glass-themed UI elements.",
   "frontend/src/index.css": "Global styles with premium dark glassmorphism theme (#0A0F1C → #020617 gradient), enhanced OKLCH color system, circular story bubbles with glowing rings, premium post card animations, floating navigation styles, action icon micro-interactions, and comprehensive animation utilities for smooth premium UI.",
   "frontend/tailwind.config.js": "Tailwind configuration extended with premium design tokens including SF Pro Display font, accent gradient colors (blue/purple/cyan), premium shadow utilities (glow-blue/purple/gold), enhanced border radius (xl/2xl/3xl), and smooth animation keyframes for glassmorphism UI.",
-  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations including role management mutations (assignAdminRole, removeAdminRole), with proper type handling for UserRole__1 enum returned by backend, optimistic updates, cache invalidation, and error handling.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for all backend operations using the patched actor hook, including the missing useIsCallerAdmin hook, with proper type handling, optimistic updates, cache invalidation, and error handling.",
   "frontend/src/pages/messages/MessagesPage.tsx": "Messages list page displaying all conversations with last message preview, wrapped conversation items in clickable divs instead of passing onClick to GlassCard.",
   "frontend/src/pages/notifications/NotificationsPage.tsx": "Notifications page displaying user notifications with unread indicators and mark-as-read functionality, wrapped notification items in clickable divs instead of passing onClick to GlassCard.",
   "frontend/src/utils/startup.ts": "Startup utilities for timeout handling, phase tracking, and development logging of startup transitions and errors.",
@@ -26,12 +26,13 @@
   "frontend/src/components/posts/PostCard.tsx": "Premium post card with elevated glass surface, gradient borders, large avatar with ring glow, role badges, animated Like/Comment/Share action icons with glow effects, smooth hover scale transitions, and UI-only Share toast placeholder.",
   "frontend/src/components/posts/FeedList.tsx": "Feed list component displaying posts with shimmer skeleton loading states, smooth refresh functionality, and consistent premium card styling.",
   "frontend/src/pages/home/HomePage.tsx": "Home page displaying the main feed without trending posts section, with create post button.",
-  "frontend/src/pages/auth/ProfileSetupPage.tsx": "Profile setup page for first-time users to complete their profile with name, class, and year; fixed to use actor.signup directly instead of non-existent useSignup hook.",
+  "frontend/src/pages/auth/ProfileSetupPage.tsx": "Profile setup page for first-time users using the patched actor hook to call actor.signup directly with proper error handling and loading states.",
   "frontend/src/components/stories/StoriesRow.tsx": "Stories row displaying circular story bubbles with animated glowing gradient rings, premium Create Story tile with blue-purple gradient and pulsing plus icon, smooth hover/press animations, and horizontal scroll with hidden scrollbar.",
   "frontend/src/components/stories/CreateStoryDialog.tsx": "Story creation dialog with premium glass styling, gradient title, rounded 2xl form elements with accent-cyan focus states, animated image upload area with action-icon hover effects, and gradient progress indicator.",
   "frontend/src/components/posts/CreatePostFab.tsx": "Floating action button with premium gradient background, large rounded-full shape, glow shadow effects, smooth scale hover animation, and pulsing plus icon for creating posts.",
   "frontend/src/components/system/RoleBadge.tsx": "Role badge component with premium styling - Owner badge uses gold-blue gradient with crown icon and pulse-glow animation, Admin badge uses blue-purple gradient with shield icon and subtle glow shadow.",
   "frontend/src/components/posts/CommentsDrawer.tsx": "Comments drawer displaying post comments with role badges next to author names, glass-surface styling, and smooth comment submission functionality.",
   "frontend/src/components/system/NavIcon.tsx": "Navigation icon component with automatic fallback to lucide-react icons when image assets fail to load, ensuring no broken image placeholders appear in the UI.",
-  "frontend/src/pages/auth/LoginPage.tsx": "Login page with Internet Identity authentication, featuring the new Sach Wave logo (v2), premium glass styling, gradient effects, error handling, and a link to switch to signup page."
+  "frontend/src/pages/auth/LoginPage.tsx": "Login page with Internet Identity authentication, featuring the new Sach Wave logo (v2), premium glass styling, gradient effects, error handling, and a link to switch to signup page.",
+  "frontend/src/hooks/usePatchedActor.ts": "New actor hook that creates anonymous/authenticated backend actors without calling the missing _initializeAccessControlWithSecret method, preventing startup hangs."
 }

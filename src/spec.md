@@ -1,13 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Fix missing/broken mobile footer navigation icons, restore unread/role badges, and swap the app logo to the user-provided image.
+**Goal:** Fix the app startup hang on “Connecting to backend…” for logged-in users by removing the frontend’s call to the missing backend admin initialization method.
 
 **Planned changes:**
-- Ensure the mobile bottom navigation always renders visible icons for Home, Stories, Chat, Notifications, and Profile with no broken-image placeholders; add a safe fallback icon behavior if an asset fails to load while preserving existing active/invert styling.
-- Provide/ensure a complete set of footer icon assets exists at the current referenced paths: nav-icon-home, nav-icon-stories, nav-icon-chat, nav-icon-notifications, nav-icon-profile (all 128x128 PNGs).
-- Fix Notifications unread-count badge visibility: show only when unread count > 0 and hide when 0, across both sidebar/nav list and mobile bottom nav.
-- Restore Owner role badge display near the username on profile pages using the existing RoleBadge styling rules; ensure backend Owner assignment behavior does not regress.
-- Update all UI locations that display the current Sach Wave logo (desktop sidebar header, mobile header, splash screen) to use the newly uploaded logo asset and ensure it renders cleanly on dark backgrounds at small sizes.
+- Add a new (non-immutable) actor hook that creates anonymous and authenticated actors without calling `actor._initializeAccessControlWithSecret(...)`, returning `{ actor, isFetching }` in the same shape the app expects.
+- Update editable frontend modules (including `frontend/src/App.tsx` and `frontend/src/hooks/useQueries.ts`) to import and use the new actor hook instead of the immutable `useActor`.
+- Remove/avoid any remaining references to `_initializeAccessControlWithSecret` and related unused admin-token utilities to prevent TypeScript build errors.
 
-**User-visible outcome:** On mobile, the bottom navigation shows five working icons (no broken placeholders), unread notifications display a badge when applicable, Owner users see their Owner badge near their username, and the app displays the new logo everywhere the old logo appeared.
+**User-visible outcome:** When logged in, the app no longer gets stuck on “Connecting to backend…” and proceeds into the main app routes as expected; anonymous behavior remains unchanged.

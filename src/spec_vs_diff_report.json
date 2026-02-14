@@ -1,61 +1,33 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T20:47:21.846Z",
-  "summary": "Diff implements a NavIcon component with runtime fallback icons to prevent broken image placeholders, updates AppShell navigation to use it (including unread badge conditional rendering), restores Owner/Admin RoleBadge display on ProfilePage, and swaps the splash screen and login page logo to sach-wave-logo-v2. However, the required static nav icon assets are not evidenced as added, and some acceptance-criteria coverage (mobile bottom nav badge/logo locations, backend Owner-role assignment) is not verifiable from the provided diff summary.",
-  "missing_requirements": [
-    {
-      "id": "REQ-2",
-      "requirement": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
-      "reason": "The diff shows code referencing the required asset paths, but does not show the actual PNG files being added to the repo/static assets; therefore existence/loading at runtime cannot be confirmed from this diff summary.",
-      "evidence": [
-        "frontend/src/layout/AppShell.tsx"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
-      "reason": "Badge conditional rendering is implemented in AppShell nav list, but the requirement explicitly includes both the sidebar/nav list and the mobile bottom nav; the diff snippet does not show the mobile bottom navigation implementation, so that part cannot be verified.",
-      "evidence": [
-        "frontend/src/layout/AppShell.tsx (badge rendering shown; mobile bottom nav not evidenced due to truncation)"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling; Backend still assigns the first signed-up user the immutable Owner role (no regression).",
-      "reason": "Frontend ProfilePage now shows RoleBadge for owner/admin roles, but there is no backend diff provided (no backend/main.mo changes shown) to verify the 'first signed-up user is immutable Owner' behavior has no regression.",
-      "evidence": [
-        "frontend/src/pages/profile/ProfilePage.tsx"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "requirement": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset (desktop sidebar header, mobile header, splash screen).",
-      "reason": "Splash screen and login page logo are updated to sach-wave-logo-v2, but the diff snippet does not show the desktop sidebar header and mobile header logo locations being updated (if they exist elsewhere), so full coverage cannot be confirmed from the provided diff summary.",
-      "evidence": [
-        "frontend/src/components/system/SplashScreen.tsx",
-        "frontend/src/pages/auth/LoginPage.tsx",
-        "frontend/src/layout/AppShell.tsx (no explicit logo evidence in shown truncation)"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-14T20:59:11.413Z",
+  "summary": "The diff implements a new frontend actor hook (`usePatchedActor`) that creates anonymous/authenticated actors without calling the missing `_initializeAccessControlWithSecret`, and updates key consumers (App and React Query hooks) to use it. No clear missing requirements are visible from the provided diff summary, but some extra behaviors/UI-startup logic appear to have been added beyond the stated scope.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Added Search and Settings navigation links in AppShell alongside the requested bottom/footer nav items.",
-      "reason": "BuildRequest non-goals include not adding new navigation destinations or changing route structure; Search/Settings are not mentioned in the requested footer icon fixes and may represent additional navigation destinations.",
+      "description": "Global invalidation + refetch of (almost) all React Query queries whenever the actor changes.",
+      "reason": "REQ-1/REQ-2 require creating a patched actor hook and updating imports; they do not request broad query invalidation/refetch behavior.",
       "evidence": [
-        "frontend/src/layout/AppShell.tsx (Link to \"/search\" and \"/settings\")"
+        "frontend/src/hooks/usePatchedActor.ts"
+      ]
+    },
+    {
+      "description": "Additional startup-flow logic involving explicit timeouts/splash duration constants (potential broader startup UX changes).",
+      "reason": "Non-goals include not redesigning the startup UI beyond what is necessary; the diff shows new startup timing constants and (per file summary) a more complex startup gate, which may be beyond the minimal fix requested.",
+      "evidence": [
+        "frontend/src/App.tsx",
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.68,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/system/NavIcon.tsx",
-    "frontend/src/components/system/SplashScreen.tsx",
-    "frontend/src/layout/AppShell.tsx",
-    "frontend/src/pages/auth/LoginPage.tsx",
-    "frontend/src/pages/profile/ProfilePage.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/hooks/usePatchedActor.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/auth/ProfileSetupPage.tsx",
     "project_state.json"
   ]
 }

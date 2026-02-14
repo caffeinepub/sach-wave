@@ -1,7 +1,7 @@
 import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet } from '@tanstack/react-router';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from './hooks/useQueries';
-import { useActor } from './hooks/useActor';
+import { usePatchedActor } from './hooks/usePatchedActor';
 import AuthGate from './pages/auth/AuthGate';
 import AppShell from './layout/AppShell';
 import HomePage from './pages/home/HomePage';
@@ -134,7 +134,7 @@ const SPLASH_DURATION = 2000; // 2 seconds
 export default function App() {
   const queryClient = useQueryClient();
   const { identity, isInitializing, loginStatus, isLoginError } = useInternetIdentity();
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching: actorFetching } = usePatchedActor();
   const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched, error: profileError } = useGetCallerUserProfile();
 
   const [showSplash, setShowSplash] = useState(true);

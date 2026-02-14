@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
+import { usePatchedActor } from './usePatchedActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import type { Post, Story, Message, Notification, UserProfile, Announcement } from '../backend';
 import { ExternalBlob } from '../backend';
@@ -7,7 +7,7 @@ import { Principal } from '@icp-sdk/core/principal';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching: actorFetching } = usePatchedActor();
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
@@ -27,7 +27,7 @@ export function useGetCallerUserProfile() {
 }
 
 export function useGetUserProfile(userId: string) {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
 
   return useQuery<UserProfile | null>({
     queryKey: ['userProfile', userId],
@@ -40,7 +40,7 @@ export function useGetUserProfile(userId: string) {
 }
 
 export function useUpdateProfile() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -56,7 +56,7 @@ export function useUpdateProfile() {
 }
 
 export function useUpdateLastSeen() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useMutation({
@@ -68,7 +68,7 @@ export function useUpdateLastSeen() {
 }
 
 export function useSearchUsers(searchTerm: string) {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
 
   return useQuery<UserProfile[]>({
     queryKey: ['searchUsers', searchTerm],
@@ -80,9 +80,24 @@ export function useSearchUsers(searchTerm: string) {
   });
 }
 
+// Admin Check
+export function useIsCallerAdmin() {
+  const { actor, isFetching } = usePatchedActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<boolean>({
+    queryKey: ['isCallerAdmin'],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching && !!identity,
+  });
+}
+
 // Post Queries
 export function useGetAllPosts() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<Post[]>({
@@ -97,7 +112,7 @@ export function useGetAllPosts() {
 }
 
 export function useGetPostsByUser(userId: string) {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
 
   return useQuery<Post[]>({
     queryKey: ['posts', 'user', userId],
@@ -110,7 +125,7 @@ export function useGetPostsByUser(userId: string) {
 }
 
 export function useCreatePost() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -125,7 +140,7 @@ export function useCreatePost() {
 }
 
 export function useLikePost() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -161,7 +176,7 @@ export function useLikePost() {
 }
 
 export function useCommentOnPost() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -176,7 +191,7 @@ export function useCommentOnPost() {
 }
 
 export function useDeletePost() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -195,7 +210,7 @@ export function useDeletePost() {
 
 // Story Queries
 export function useGetActiveStories() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<Story[]>({
@@ -210,7 +225,7 @@ export function useGetActiveStories() {
 }
 
 export function useCreateStory() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -226,7 +241,7 @@ export function useCreateStory() {
 
 // Message Queries
 export function useGetConversations() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<[Principal, Message][]>({
@@ -241,7 +256,7 @@ export function useGetConversations() {
 }
 
 export function useGetConversation(otherUserId: string) {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<Message[]>({
@@ -256,7 +271,7 @@ export function useGetConversation(otherUserId: string) {
 }
 
 export function useSendMessage() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -272,7 +287,7 @@ export function useSendMessage() {
 }
 
 export function useMarkMessageAsRead() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -288,7 +303,7 @@ export function useMarkMessageAsRead() {
 
 // Notification Queries
 export function useGetNotifications() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
   const { identity } = useInternetIdentity();
 
   return useQuery<Notification[]>({
@@ -302,23 +317,8 @@ export function useGetNotifications() {
   });
 }
 
-export function useGetUnreadNotificationCount() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<bigint>({
-    queryKey: ['unreadNotificationCount'],
-    queryFn: async () => {
-      if (!actor) return BigInt(0);
-      return actor.getUnreadNotificationCount();
-    },
-    enabled: !!actor && !isFetching && !!identity,
-    refetchInterval: 30000,
-  });
-}
-
 export function useMarkNotificationAsRead() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -333,37 +333,24 @@ export function useMarkNotificationAsRead() {
   });
 }
 
+export function useGetUnreadNotificationCount() {
+  const { actor, isFetching } = usePatchedActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<bigint>({
+    queryKey: ['unreadNotificationCount'],
+    queryFn: async () => {
+      if (!actor) return BigInt(0);
+      return actor.getUnreadNotificationCount();
+    },
+    enabled: !!actor && !isFetching && !!identity,
+    refetchInterval: 30000,
+  });
+}
+
 // Admin Queries
-export function useIsCallerAdmin() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery<boolean>({
-    queryKey: ['isAdmin'],
-    queryFn: async () => {
-      if (!actor) return false;
-      return actor.isCallerAdmin();
-    },
-    enabled: !!actor && !isFetching && !!identity,
-  });
-}
-
-export function useGetCallerUserRole() {
-  const { actor, isFetching } = useActor();
-  const { identity } = useInternetIdentity();
-
-  return useQuery({
-    queryKey: ['userRole'],
-    queryFn: async () => {
-      if (!actor) return 'guest';
-      return actor.getCallerUserRole();
-    },
-    enabled: !!actor && !isFetching && !!identity,
-  });
-}
-
 export function useGetAllUsers() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
 
   return useQuery<UserProfile[]>({
     queryKey: ['allUsers'],
@@ -376,7 +363,7 @@ export function useGetAllUsers() {
 }
 
 export function useBanUser() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -391,7 +378,7 @@ export function useBanUser() {
 }
 
 export function useUnbanUser() {
-  const { actor } = useActor();
+  const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -405,74 +392,8 @@ export function useUnbanUser() {
   });
 }
 
-export function useAssignAdminRole() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.assignAdminRole(Principal.fromText(userId));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-    onError: (error: any) => {
-      console.error('Assign admin error:', error);
-    },
-  });
-}
-
-export function useRemoveAdminRole() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.removeAdminRole(Principal.fromText(userId));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-    onError: (error: any) => {
-      console.error('Remove admin error:', error);
-    },
-  });
-}
-
-export function useGetAnnouncements() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<Announcement[]>({
-    queryKey: ['announcements'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAnnouncements();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-export function useCreateAnnouncement() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (content: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.createAnnouncement(content);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
-    },
-  });
-}
-
 export function useGetActivityStats() {
-  const { actor, isFetching } = useActor();
+  const { actor, isFetching } = usePatchedActor();
 
   return useQuery<{
     totalUsers: bigint;
@@ -487,5 +408,83 @@ export function useGetActivityStats() {
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 60000,
+  });
+}
+
+export function useGetAnnouncements() {
+  const { actor, isFetching } = usePatchedActor();
+
+  return useQuery<Announcement[]>({
+    queryKey: ['announcements'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAnnouncements();
+    },
+    enabled: !!actor && !isFetching,
+    refetchInterval: 60000,
+  });
+}
+
+export function useCreateAnnouncement() {
+  const { actor } = usePatchedActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (content: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createAnnouncement(content);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+    },
+  });
+}
+
+// Role Management
+export function useAssignAdminRole() {
+  const { actor } = usePatchedActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.assignAdminRole(Principal.fromText(userId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+}
+
+export function useRemoveAdminRole() {
+  const { actor } = usePatchedActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.removeAdminRole(Principal.fromText(userId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allUsers'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+}
+
+// Signup
+export function useSignup() {
+  const { actor } = usePatchedActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name, className, year }: { name: string; className: string; year: number }) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.signup(name, className, BigInt(year));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
   });
 }

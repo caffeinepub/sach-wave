@@ -1,77 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "App UI update: fix missing navigation footer icons and owner badge; add provided image as app logo.",
-  "architectural_notes": [],
+  "summary": "App deployment: fix startup hang on “Connecting to backend” by removing frontend call to missing backend method `_initializeAccessControlWithSecret` (actor creation was failing).",
+  "architectural_notes": [
+    "Frontend startup must not call backend/actor methods that are not implemented; actor initialization should fail fast with clear error or guard optional admin initialization."
+  ],
   "known_issues": [
-    "Navigation footer bar icons are not showing (broken image placeholders).",
-    "Owner badge is not showing."
+    "App stuck on “Connecting to backend” due to frontend calling missing backend method `_initializeAccessControlWithSecret`, preventing actor creation."
   ],
   "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- Navigation icon (home) (nav-icon-home.dim_128x128.png)\n- Navigation icon (stories) (nav-icon-stories.dim_128x128.png)\n- Navigation icon (chat/messages) (nav-icon-chat.dim_128x128.png)\n- Navigation icon (notifications/bell) (nav-icon-notifications.dim_128x128.png)\n- Navigation icon (user/profile) (nav-icon-profile.dim_128x128.png)\n\n## Edit Images\n- Replace app logo artwork using the uploaded logo image (sach-wave-logo.dim_512x512.png > sach-wave-logo-v2.dim_512x512.png)",
   "existing_features": [
     {
-      "id": "feature-fix-the-mobile-bottom-navigation-footer-so-it-never-shows-broken-image-placeholders-ensure-all-footer-icons-render-correctly-for-home-stories-chat-notifications-and-profile",
-      "title": "Fix the mobile bottom navigation footer so it never shows broken image placeholders: ensure all footer icons render correctly for Home, Stories, Chat, Notifications, and Profile.",
+      "id": "feature-stop-frontend-startup-from-calling-the-missing-backend-method-initializeaccesscontrolwithsecret-so-authenticated-users-no-longer-get-stuck-on-the-connecting-to-backend-startup-phase",
+      "title": "Stop frontend startup from calling the missing backend method `_initializeAccessControlWithSecret` so authenticated users no longer get stuck on the “Connecting to backend…” startup phase.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-provide-a-complete-set-of-suitable-navigation-icon-assets-that-match-the-app-s-premium-dark-theme-and-the-existing-asset-paths-referenced-by-the-footer",
-      "title": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
+      "id": "feature-because-frontend-src-hooks-useactor-ts-is-immutable-implement-a-new-non-immutable-actor-hook-that-creates-the-backend-actor-anonymous-and-authenticated-without-calling-initializeaccesscontrolwithsecret-and-update-all-editable-frontend-modules-to-import-and-use-the-new-hook-instead-of-useactor",
+      "title": "Because `frontend/src/hooks/useActor.ts` is immutable, implement a new non-immutable actor hook that creates the backend actor (anonymous and authenticated) without calling `_initializeAccessControlWithSecret`, and update all editable frontend modules to import and use the new hook instead of `useActor`.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-ensure-the-notifications-unread-count-badge-displays-correctly-on-the-navigation-surfaces-whenever-there-are-unread-notifications-and-remains-hidden-when-the-count-is-0",
-      "title": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-restore-the-owner-badge-display-so-users-with-the-owner-role-visibly-see-the-owner-badge-on-their-profile-near-the-username-consistent-with-the-existing-rolebadge-component-styling",
-      "title": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-the-user-provided-uploaded-image-as-the-app-logo-by-updating-all-places-that-currently-render-the-existing-sach-wave-logo-to-use-the-new-logo-asset",
-      "title": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset.",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Fix navigation footer bar: icons not showing (broken placeholders) and ensure suitable icons are displayed.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Fix/restore the owner badge display in the UI (location implied by prior design).",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Add the user-provided uploaded image as the app logo.",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "projectName": "Fix missing footer navigation icons, restore badge/owner badge, and update app logo",
+  "new_feature_requests": [],
+  "projectName": "Fix startup hang on “Connecting to backend” by removing missing admin init call",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

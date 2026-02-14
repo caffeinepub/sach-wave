@@ -1,127 +1,48 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix footer nav icons/badges and swap to new logo asset",
+  "title": "Remove missing admin init call from frontend actor creation to fix startup hang",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure mobile bottom navigation never shows broken image placeholders and all five icons render with active styling preserved.",
+      "summary": "Prevent the app startup flow from invoking the missing backend method `_initializeAccessControlWithSecret` so authenticated users do not hang on “Connecting to backend…”.",
       "acceptanceCriteria": [
-        "On mobile breakpoints, the bottom navigation shows five visible icons (Home, Stories, Chat, Notifications, Profile) with no broken-image placeholders.",
-        "If any icon asset fails to load, the UI still renders a suitable fallback icon (no empty/broken state).",
-        "Active icon styling (the existing invert/brightness behavior) still works."
+        "When logged in, the app progresses past “Connecting to backend…” and reaches AuthGate / main app routes without hanging.",
+        "No runtime call is made to `actor._initializeAccessControlWithSecret(...)` during actor creation.",
+        "No TypeScript build errors occur due to references to `_initializeAccessControlWithSecret` or unused admin-token utilities."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/system/NavIcon.tsx",
-          "operation": "create",
-          "description": "Create a small NavIcon component that renders a nav icon image with a robust onError fallback (e.g., a local inline SVG/lucide-react fallback icon) while supporting the existing active-state styling classes. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/layout/AppShell.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Replace bottom-nav and sidebar/nav-list <img> usage with the new NavIcon component so broken assets never render as broken-image placeholders; ensure active styling (brightness/invert) continues to apply consistently across both mobile and desktop nav surfaces. Verify the component's usage instructions before implementing."
+          "description": "Switch startup/backend-connection state to use the new patched actor hook (instead of the immutable `useActor`) so authenticated startup no longer triggers `_initializeAccessControlWithSecret`."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Provide a complete, consistent set of premium dark-theme navigation icon assets at the existing footer-referenced paths.",
+      "summary": "Add a new editable actor hook that creates anonymous/authenticated backend actors without `_initializeAccessControlWithSecret`, and update all editable imports to use it instead of `useActor`.",
       "acceptanceCriteria": [
-        "The following files exist in the frontend static assets and load successfully at runtime: /assets/generated/nav-icon-home.dim_128x128.png, /assets/generated/nav-icon-stories.dim_128x128.png, /assets/generated/nav-icon-chat.dim_128x128.png, /assets/generated/nav-icon-notifications.dim_128x128.png, /assets/generated/nav-icon-profile.dim_128x128.png.",
-        "Icons are visually consistent as a set (stroke weight, corner radii, and lighting), and readable at 20–24px sizes."
+        "A new hook file (in a non-immutable path) provides `{ actor, isFetching }` with the same shape currently expected by the app.",
+        "`frontend/src/App.tsx` uses the new hook for backend connection state (actor presence) so the startup phase logic works correctly.",
+        "`frontend/src/hooks/useQueries.ts` (and any other editable files that currently import `useActor`) are updated to use the new hook, ensuring all backend calls use the patched actor instance.",
+        "The app behaves the same as before for anonymous users (anonymous actor still created), except it no longer hangs during backend connection."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/assets/generated/nav-icon-home.dim_128x128.png",
-          "operation": "modify",
-          "description": "Add/replace the Home navigation icon asset to ensure it matches the premium dark theme and loads at runtime from this exact path."
-        },
-        {
-          "path": "frontend/public/assets/generated/nav-icon-stories.dim_128x128.png",
-          "operation": "modify",
-          "description": "Add/replace the Stories navigation icon asset to ensure it matches the premium dark theme and loads at runtime from this exact path."
-        },
-        {
-          "path": "frontend/public/assets/generated/nav-icon-chat.dim_128x128.png",
-          "operation": "modify",
-          "description": "Add/replace the Chat navigation icon asset to ensure it matches the premium dark theme and loads at runtime from this exact path."
-        },
-        {
-          "path": "frontend/public/assets/generated/nav-icon-notifications.dim_128x128.png",
-          "operation": "modify",
-          "description": "Add/replace the Notifications navigation icon asset to ensure it matches the premium dark theme and loads at runtime from this exact path."
-        },
-        {
-          "path": "frontend/public/assets/generated/nav-icon-profile.dim_128x128.png",
-          "operation": "modify",
-          "description": "Add/replace the Profile navigation icon asset to ensure it matches the premium dark theme and loads at runtime from this exact path."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Fix unread-count badge rendering on navigation so it shows only when unread > 0 and never renders a stray “0”.",
-      "acceptanceCriteria": [
-        "When getUnreadNotificationCount returns a value > 0, the badge is visible on the Notifications nav item in both the sidebar/nav list and the mobile bottom nav.",
-        "When the unread count is 0, the badge is not shown (no stray “0” visible in the UI)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/layout/AppShell.tsx",
-          "operation": "modify",
-          "description": "Fix the conditional rendering for the Notifications badge in both the sidebar/nav list and the mobile bottom nav so a count of 0 does not render as a visible text node (avoid patterns that return 0 into JSX). Ensure the badge shows only when count > 0."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Restore Owner badge visibility on profile near username using existing RoleBadge styling logic (no frontend regression for roles).",
-      "acceptanceCriteria": [
-        "If a profile’s role is Owner, the profile page displays the gold Owner badge near the username.",
-        "If a profile’s role is not Owner/Admin, no role badge is shown.",
-        "Backend still assigns the first signed-up user the immutable Owner role (no regression)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/profile/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Ensure role-to-badge mapping is correct and resilient (Owner => RoleBadge owner, Admin => RoleBadge admin, others => none) and that the badge is displayed near the username consistent with the existing RoleBadge component styling. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/system/RoleBadge.tsx",
-          "operation": "modify",
-          "description": "Confirm Owner badge visuals and labeling remain consistent (gold Owner styling) and that only supported roles render a badge; adjust only if needed to match the intended premium theme. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Swap all occurrences of the existing Sach Wave logo to the user-provided new logo asset (sidebar header, mobile header, splash screen, and other current logo locations).",
-      "acceptanceCriteria": [
-        "The app uses the new logo in the desktop sidebar header, mobile header, and splash screen (all locations currently showing the Sach Wave logo).",
-        "The logo renders crisply on dark backgrounds and at small sizes (e.g., 32–40px) without unwanted white-box artifacts (handle transparency or background appropriately)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/public/assets/generated/sach-wave-logo-v2.dim_512x512.png",
+          "path": "frontend/src/hooks/usePatchedActor.ts",
           "operation": "create",
-          "description": "Add the new uploaded logo image as a static asset at this exact path for use across the app UI."
+          "description": "Create a new non-immutable React hook that mirrors the existing `{ actor, isFetching }` shape, creates an anonymous actor when not authenticated, creates an authenticated actor when identity exists, and explicitly does not call `_initializeAccessControlWithSecret` or any admin-token utility. Use existing actor creation infrastructure (e.g., `createActorWithConfig`) and keep React Query cache keying consistent with identity changes."
         },
         {
-          "path": "frontend/src/layout/AppShell.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update the desktop sidebar header logo and the mobile header/drawer logo to use /assets/generated/sach-wave-logo-v2.dim_512x512.png (replacing the current sach-wave-logo.dim_512x512.png) and ensure it looks correct on dark backgrounds."
+          "description": "Replace imports/usage of the immutable `useActor` with the new patched actor hook so all React Query hooks use the patched actor instance for backend calls."
         },
         {
-          "path": "frontend/src/components/system/SplashScreen.tsx",
+          "path": "frontend/src/pages/auth/ProfileSetupPage.tsx",
           "operation": "modify",
-          "description": "Update the splash screen logo to use /assets/generated/sach-wave-logo-v2.dim_512x512.png and ensure it renders crisply with the existing glow/animation styling."
-        },
-        {
-          "path": "frontend/src/pages/auth/LoginPage.tsx",
-          "operation": "modify",
-          "description": "Update the login screen logo to use /assets/generated/sach-wave-logo-v2.dim_512x512.png anywhere the Sach Wave logo is currently rendered so branding is consistent across startup/auth surfaces."
+          "description": "Update to use the new patched actor hook instead of importing `useActor`, ensuring signup/profile setup uses the patched actor instance."
         }
       ]
     }
