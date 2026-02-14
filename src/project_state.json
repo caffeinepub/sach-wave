@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "App UI update: fix missing navigation footer icons and owner badge; add provided image as app logo.",
+  "architectural_notes": [],
+  "known_issues": [
+    "Navigation footer bar icons are not showing (broken image placeholders).",
+    "Owner badge is not showing."
+  ],
+  "isFixRequest": true,
+  "imageRequirements": "## Required Images\n- Navigation icon (home) (nav-icon-home.dim_128x128.png)\n- Navigation icon (stories) (nav-icon-stories.dim_128x128.png)\n- Navigation icon (chat/messages) (nav-icon-chat.dim_128x128.png)\n- Navigation icon (notifications/bell) (nav-icon-notifications.dim_128x128.png)\n- Navigation icon (user/profile) (nav-icon-profile.dim_128x128.png)\n\n## Edit Images\n- Replace app logo artwork using the uploaded logo image (sach-wave-logo.dim_512x512.png > sach-wave-logo-v2.dim_512x512.png)",
+  "existing_features": [
+    {
+      "id": "feature-fix-the-mobile-bottom-navigation-footer-so-it-never-shows-broken-image-placeholders-ensure-all-footer-icons-render-correctly-for-home-stories-chat-notifications-and-profile",
+      "title": "Fix the mobile bottom navigation footer so it never shows broken image placeholders: ensure all footer icons render correctly for Home, Stories, Chat, Notifications, and Profile.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-a-complete-set-of-suitable-navigation-icon-assets-that-match-the-app-s-premium-dark-theme-and-the-existing-asset-paths-referenced-by-the-footer",
+      "title": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-notifications-unread-count-badge-displays-correctly-on-the-navigation-surfaces-whenever-there-are-unread-notifications-and-remains-hidden-when-the-count-is-0",
+      "title": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-restore-the-owner-badge-display-so-users-with-the-owner-role-visibly-see-the-owner-badge-on-their-profile-near-the-username-consistent-with-the-existing-rolebadge-component-styling",
+      "title": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-the-user-provided-uploaded-image-as-the-app-logo-by-updating-all-places-that-currently-render-the-existing-sach-wave-logo-to-use-the-new-logo-asset",
+      "title": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Fix navigation footer bar: icons not showing (broken placeholders) and ensure suitable icons are displayed.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Fix/restore the owner badge display in the UI (location implied by prior design).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add the user-provided uploaded image as the app logo.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Fix missing footer navigation icons, restore badge/owner badge, and update app logo",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

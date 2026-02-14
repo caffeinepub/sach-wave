@@ -1,0 +1,135 @@
+{
+  "kind": "build_request",
+  "title": "Fix missing footer navigation icons, restore badge/owner badge, and update app logo",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Fix the mobile bottom navigation footer so it never shows broken image placeholders: ensure all footer icons render correctly for Home, Stories, Chat, Notifications, and Profile.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-icons-badge-not-showing",
+          "msg-user-footer-no-icons",
+          "msg-user-do-it-by-yourself"
+        ],
+        "quotes": [
+          "The icons are not shoing and the badge is also not shoing fix it",
+          "The navigation footer bar has no icons and the owner badge",
+          "Do it by yourself make the suitable icons"
+        ]
+      },
+      "acceptanceCriteria": [
+        "On mobile breakpoints, the bottom navigation shows five visible icons (Home, Stories, Chat, Notifications, Profile) with no broken-image placeholders.",
+        "If any icon asset fails to load, the UI still renders a suitable fallback icon (no empty/broken state).",
+        "Active icon styling (the existing invert/brightness behavior) still works."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-do-it-by-yourself"
+        ],
+        "quotes": [
+          "Do it by yourself make the suitable icons"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The following files exist in the frontend static assets and load successfully at runtime: /assets/generated/nav-icon-home.dim_128x128.png, /assets/generated/nav-icon-stories.dim_128x128.png, /assets/generated/nav-icon-chat.dim_128x128.png, /assets/generated/nav-icon-notifications.dim_128x128.png, /assets/generated/nav-icon-profile.dim_128x128.png.",
+        "Icons are visually consistent as a set (stroke weight, corner radii, and lighting), and readable at 20–24px sizes."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-icons-badge-not-showing"
+        ],
+        "quotes": [
+          "The icons are not shoing and the badge is also not shoing fix it"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When getUnreadNotificationCount returns a value > 0, the badge is visible on the Notifications nav item in both the sidebar/nav list and the mobile bottom nav.",
+        "When the unread count is 0, the badge is not shown (no stray “0” visible in the UI)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-user-footer-no-icons"
+        ],
+        "quotes": [
+          "The navigation footer bar has no icons and the owner badge"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If a profile’s role is Owner, the profile page displays the gold Owner badge near the username.",
+        "If a profile’s role is not Owner/Admin, no role badge is shown.",
+        "Backend still assigns the first signed-up user the immutable Owner role (no regression)."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-add-logo",
+          "msg-user-now-build",
+          "msg-user-do-it-by-yourself"
+        ],
+        "quotes": [
+          "Yes and also add this as a logo",
+          "Now build it",
+          "Do it by yourself make the suitable icons"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The app uses the new logo in the desktop sidebar header, mobile header, and splash screen (all locations currently showing the Sach Wave logo).",
+        "The logo renders crisply on dark backgrounds and at small sizes (e.g., 32–40px) without unwanted white-box artifacts (handle transparency or background appropriately)."
+      ]
+    }
+  ],
+  "constraints": [
+    "Frontend must not modify files under frontend/src/components/ui or any paths listed in frontend.immutablePaths.",
+    "Backend must remain a single Motoko actor in backend/main.mo; add backend/migration.mo only if a state upgrade is required."
+  ],
+  "nonGoals": [
+    "Redesigning the overall UI theme beyond fixing the missing icons/badges and swapping the logo.",
+    "Adding new navigation destinations or changing route structure.",
+    "Adding third-party icon libraries that require network loading at runtime."
+  ],
+  "imageRequirements": {
+    "required": [
+      "Navigation icon (home) (nav-icon-home.dim_128x128.png)",
+      "Navigation icon (stories) (nav-icon-stories.dim_128x128.png)",
+      "Navigation icon (chat/messages) (nav-icon-chat.dim_128x128.png)",
+      "Navigation icon (notifications/bell) (nav-icon-notifications.dim_128x128.png)",
+      "Navigation icon (user/profile) (nav-icon-profile.dim_128x128.png)"
+    ],
+    "edits": [
+      "Replace app logo artwork using the uploaded logo image (sach-wave-logo.dim_512x512.png > sach-wave-logo-v2.dim_512x512.png)"
+    ]
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [
+      "Use English for all user-facing UI text"
+    ],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

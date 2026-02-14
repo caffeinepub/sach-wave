@@ -1,0 +1,108 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-14T20:47:21.849Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 5,
+    "implemented": 5,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Fix the mobile bottom navigation footer so it never shows broken image placeholders: ensure all footer icons render correctly for Home, Stories, Chat, Notifications, and Profile.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/system/NavIcon.tsx",
+          "frontend/src/layout/AppShell.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/system/NavIcon.tsx",
+          "frontend/src/layout/AppShell.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/nav-icon-home.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-stories.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-chat.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-notifications.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-profile.dim_128x128.png"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/nav-icon-home.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-stories.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-chat.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-notifications.dim_128x128.png",
+          "frontend/public/assets/generated/nav-icon-profile.dim_128x128.png"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/layout/AppShell.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/layout/AppShell.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/profile/ProfilePage.tsx",
+          "frontend/src/components/system/RoleBadge.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/profile/ProfilePage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/sach-wave-logo-v2.dim_512x512.png",
+          "frontend/src/layout/AppShell.tsx",
+          "frontend/src/components/system/SplashScreen.tsx",
+          "frontend/src/pages/auth/LoginPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/sach-wave-logo-v2.dim_512x512.png",
+          "frontend/src/layout/AppShell.tsx",
+          "frontend/src/components/system/SplashScreen.tsx",
+          "frontend/src/pages/auth/LoginPage.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/nav-icon-chat.dim_128x128.png",
+    "frontend/public/assets/generated/nav-icon-home.dim_128x128.png",
+    "frontend/public/assets/generated/nav-icon-notifications.dim_128x128.png",
+    "frontend/public/assets/generated/nav-icon-profile.dim_128x128.png",
+    "frontend/public/assets/generated/nav-icon-stories.dim_128x128.png",
+    "frontend/public/assets/generated/sach-wave-logo-v2.dim_512x512.png",
+    "frontend/src/components/system/NavIcon.tsx",
+    "frontend/src/components/system/SplashScreen.tsx",
+    "frontend/src/layout/AppShell.tsx",
+    "frontend/src/pages/auth/LoginPage.tsx",
+    "frontend/src/pages/profile/ProfilePage.tsx",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

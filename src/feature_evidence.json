@@ -1,0 +1,106 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-fix-the-mobile-bottom-navigation-footer-so-it-never-shows-broken-image-placeholders-ensure-all-footer-icons-render-correctly-for-home-stories-chat-notifications-and-profile",
+      "featureTitle": "Fix the mobile bottom navigation footer so it never shows broken image placeholders: ensure all footer icons render correctly for Home, Stories, Chat, Notifications, and Profile.",
+      "files": [
+        "frontend/src/components/system/NavIcon.tsx",
+        "frontend/src/layout/AppShell.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-provide-a-complete-set-of-suitable-navigation-icon-assets-that-match-the-app-s-premium-dark-theme-and-the-existing-asset-paths-referenced-by-the-footer",
+      "featureTitle": "Provide a complete set of suitable navigation icon assets that match the app’s premium dark theme and the existing asset paths referenced by the footer.",
+      "files": [],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-notifications-unread-count-badge-displays-correctly-on-the-navigation-surfaces-whenever-there-are-unread-notifications-and-remains-hidden-when-the-count-is-0",
+      "featureTitle": "Ensure the Notifications unread-count badge displays correctly on the navigation surfaces whenever there are unread notifications (and remains hidden when the count is 0).",
+      "files": [
+        "frontend/src/layout/AppShell.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-restore-the-owner-badge-display-so-users-with-the-owner-role-visibly-see-the-owner-badge-on-their-profile-near-the-username-consistent-with-the-existing-rolebadge-component-styling",
+      "featureTitle": "Restore the Owner badge display so users with the Owner role visibly see the Owner badge on their profile near the username, consistent with the existing RoleBadge component styling.",
+      "files": [
+        "frontend/src/pages/profile/ProfilePage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-the-user-provided-uploaded-image-as-the-app-logo-by-updating-all-places-that-currently-render-the-existing-sach-wave-logo-to-use-the-new-logo-asset",
+      "featureTitle": "Add the user-provided uploaded image as the app logo by updating all places that currently render the existing Sach Wave logo to use the new logo asset.",
+      "files": [
+        "frontend/src/components/system/SplashScreen.tsx",
+        "frontend/src/layout/AppShell.tsx",
+        "frontend/src/pages/auth/LoginPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
