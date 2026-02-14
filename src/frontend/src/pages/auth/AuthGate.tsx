@@ -8,11 +8,11 @@ import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 export default function AuthGate() {
   const [showSignup, setShowSignup] = useState(false);
   const { identity } = useInternetIdentity();
-  const { data: userProfile, isLoading, isFetched } = useGetCallerUserProfile();
+  const { data: userProfile, isFetched } = useGetCallerUserProfile();
 
   const isAuthenticated = !!identity;
   
-  // Only show profile setup if authenticated and profile fetch is complete
+  // Only show profile setup if authenticated and profile fetch is complete and profile is null
   const needsProfileSetup = isAuthenticated && isFetched && userProfile === null;
 
   if (needsProfileSetup) {

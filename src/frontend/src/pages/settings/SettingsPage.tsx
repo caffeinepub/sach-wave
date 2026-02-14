@@ -8,12 +8,13 @@ import { GlassCard } from '../../components/system/GlassSurface';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Moon, Sun, User, Shield, LogOut, Info, Heart, Crown } from 'lucide-react';
+import { Moon, Sun, User, Shield, LogOut, Info, Heart, Crown, Lock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import RoleBadge from '../../components/system/RoleBadge';
 import { UserRole } from '../../backend';
 import { toast } from 'sonner';
+import { lockApp } from '../../utils/accessCodeGate';
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -55,6 +56,14 @@ export default function SettingsPage() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to update role');
     }
+  };
+
+  const handleLockApp = () => {
+    lockApp();
+    toast.success('App locked. Reloading...');
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   return (
@@ -180,6 +189,22 @@ export default function SettingsPage() {
         </GlassCard>
       )}
 
+      {/* Security */}
+      <GlassCard className="p-6 mb-4">
+        <h3 className="text-lg font-semibold mb-4">Security</h3>
+        <Button
+          onClick={handleLockApp}
+          variant="outline"
+          className="w-full rounded-xl border-white/20 hover:bg-white/5"
+        >
+          <Lock className="h-4 w-4 mr-2" />
+          Lock App
+        </Button>
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          Require access code on next launch
+        </p>
+      </GlassCard>
+
       {/* App Info */}
       <GlassCard className="p-6 mb-4">
         <div className="flex items-center gap-3 mb-2">
@@ -205,7 +230,7 @@ export default function SettingsPage() {
       </GlassCard>
 
       {/* Logout */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-6 mb-4">
         <Button
           onClick={handleLogout}
           variant="destructive"

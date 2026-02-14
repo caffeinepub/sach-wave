@@ -8,21 +8,53 @@ import { Principal } from '@icp-sdk/core/principal';
 // User Profile Queries
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = usePatchedActor();
+  const { identity } = useInternetIdentity();
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserProfile();
+      // Don't throw if actor isn't ready yet - just return early
+      if (!actor || !identity) {
+        return null;
+      }
+      
+      try {
+        const profile = await actor.getCallerUserProfile();
+        // Missing profile is a valid state (null), not an error
+        return profile;
+      } catch (error: any) {
+        const errorMessage = String(error);
+        
+        // Authorization errors are expected for new users - treat as null profile
+        if (errorMessage.includes('Unauthorized') || errorMessage.includes('permission')) {
+          return null;
+        }
+        
+        // For other errors, rethrow to trigger retry logic
+        throw error;
+      }
     },
-    enabled: !!actor && !actorFetching,
-    retry: false,
+    // Only enable when authenticated - anonymous users don't have profiles
+    enabled: !!actor && !actorFetching && !!identity,
+    // Retry transient failures with short delay
+    retry: (failureCount, error) => {
+      const errorMessage = String(error);
+      
+      // Don't retry authorization errors
+      if (errorMessage.includes('Unauthorized') || errorMessage.includes('permission')) {
+        return false;
+      }
+      
+      // Retry network/agent errors up to 3 times
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 3000),
   });
 
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
-    isFetched: !!actor && query.isFetched,
+    isFetched: !!actor && !!identity && query.isFetched,
   };
 }
 
@@ -297,6 +329,7 @@ export function useMarkMessageAsRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversation'] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });
 }
@@ -313,7 +346,7 @@ export function useGetNotifications() {
       return actor.getNotifications();
     },
     enabled: !!actor && !isFetching && !!identity,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 }
 
@@ -344,13 +377,14 @@ export function useGetUnreadNotificationCount() {
       return actor.getUnreadNotificationCount();
     },
     enabled: !!actor && !isFetching && !!identity,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 }
 
 // Admin Queries
 export function useGetAllUsers() {
   const { actor, isFetching } = usePatchedActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<UserProfile[]>({
     queryKey: ['allUsers'],
@@ -358,7 +392,7 @@ export function useGetAllUsers() {
       if (!actor) return [];
       return actor.getAllUsers();
     },
-    enabled: !!actor && !isFetching,
+    enabled: !!actor && !isFetching && !!identity,
   });
 }
 
@@ -394,6 +428,7 @@ export function useUnbanUser() {
 
 export function useGetActivityStats() {
   const { actor, isFetching } = usePatchedActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<{
     totalUsers: bigint;
@@ -403,11 +438,16 @@ export function useGetActivityStats() {
   }>({
     queryKey: ['activityStats'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return {
+        totalUsers: BigInt(0),
+        totalPosts: BigInt(0),
+        totalMessages: BigInt(0),
+        activeUsers: BigInt(0),
+      };
       return actor.getActivityStats();
     },
-    enabled: !!actor && !isFetching,
-    refetchInterval: 60000,
+    enabled: !!actor && !isFetching && !!identity,
+    refetchInterval: 30000,
   });
 }
 
@@ -440,7 +480,6 @@ export function useCreateAnnouncement() {
   });
 }
 
-// Role Management
 export function useAssignAdminRole() {
   const { actor } = usePatchedActor();
   const queryClient = useQueryClient();
@@ -452,7 +491,6 @@ export function useAssignAdminRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }
@@ -468,23 +506,6 @@ export function useRemoveAdminRole() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allUsers'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-  });
-}
-
-// Signup
-export function useSignup() {
-  const { actor } = usePatchedActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ name, className, year }: { name: string; className: string; year: number }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.signup(name, className, BigInt(year));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
     },
   });
 }

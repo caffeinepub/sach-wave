@@ -27,14 +27,14 @@ export function usePatchedActor() {
       };
 
       const actor = await createActorWithConfig(actorOptions);
-      // Note: Removed the call to _initializeAccessControlWithSecret
-      // as it doesn't exist in the backend and was causing startup hangs
       return actor;
     },
     // Only refetch when identity changes
     staleTime: Infinity,
     // This will cause the actor to be recreated when the identity changes
-    enabled: true
+    enabled: true,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // When the actor changes, invalidate dependent queries
@@ -55,6 +55,9 @@ export function usePatchedActor() {
 
   return {
     actor: actorQuery.data || null,
-    isFetching: actorQuery.isFetching
+    isFetching: actorQuery.isFetching,
+    isError: actorQuery.isError,
+    error: actorQuery.error,
+    refetch: actorQuery.refetch,
   };
 }

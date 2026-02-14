@@ -1,39 +1,54 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T20:59:11.416Z",
+  "generatedAt": "2026-02-14T21:39:37.479Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Stop frontend startup from calling the missing backend method `_initializeAccessControlWithSecret` so authenticated users no longer get stuck on the “Connecting to backend…” startup phase.",
+        "summary": "Fix the startup/auth flow so the app does not get stuck on a startup error when the current user profile fetch fails intermittently; the user must be able to retry successfully without a full page reload.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/hooks/usePatchedActor.ts",
           "frontend/src/App.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/hooks/usePatchedActor.ts",
           "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Because `frontend/src/hooks/useActor.ts` is immutable, implement a new non-immutable actor hook that creates the backend actor (anonymous and authenticated) without calling `_initializeAccessControlWithSecret`, and update all editable frontend modules to import and use the new hook instead of `useActor`.",
+        "summary": "Make the current-user profile React Query hook resilient to transient errors by avoiding throwing 'Actor not available' from the profile query function, and by using a limited retry policy for network/transient failures while keeping the missing-profile case as a successful null result.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/usePatchedActor.ts",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/auth/ProfileSetupPage.tsx"
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/usePatchedActor.ts",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/auth/ProfileSetupPage.tsx"
+          "frontend/src/App.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Improve diagnostics for profile-load failures without blocking valid flows: log the underlying error details in development and show a clear, user-facing English error message that distinguishes backend connection issues vs profile loading issues.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/startup.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/system/StartupScreen.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/startup.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/system/StartupScreen.tsx"
         ]
       }
     ]
@@ -44,9 +59,10 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/App.tsx",
+    "frontend/src/components/system/StartupScreen.tsx",
     "frontend/src/hooks/usePatchedActor.ts",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/auth/ProfileSetupPage.tsx",
+    "frontend/src/utils/startup.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

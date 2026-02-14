@@ -1,48 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove missing admin init call from frontend actor creation to fix startup hang",
+  "title": "Resilient startup profile-load flow with retry and diagnostics",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Prevent the app startup flow from invoking the missing backend method `_initializeAccessControlWithSecret` so authenticated users do not hang on “Connecting to backend…”.",
+      "summary": "Ensure startup/auth flow can recover from intermittent actor/profile load failures via in-app Retry without hard reload, while keeping unauthenticated auth-gate behavior.",
       "acceptanceCriteria": [
-        "When logged in, the app progresses past “Connecting to backend…” and reaches AuthGate / main app routes without hanging.",
-        "No runtime call is made to `actor._initializeAccessControlWithSecret(...)` during actor creation.",
-        "No TypeScript build errors occur due to references to `_initializeAccessControlWithSecret` or unused admin-token utilities."
+        "When an authenticated user hits an intermittent profile-load failure, the app shows a startup error state with a working Retry action (no hard refresh required).",
+        "Clicking Retry re-attempts both actor initialization and the current user profile query and can recover to a usable app state when the network/backend is available.",
+        "The app does not incorrectly show the error screen for unauthenticated users; unauthenticated users must continue to see the normal auth gate flow."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/hooks/usePatchedActor.ts",
+          "operation": "modify",
+          "description": "Expose actor initialization error/status (e.g., isError/error) and a stable refetch method so the App startup flow can explicitly re-attempt actor creation on Retry (instead of relying only on invalidation with staleTime Infinity)."
+        },
+        {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Switch startup/backend-connection state to use the new patched actor hook (instead of the immutable `useActor`) so authenticated startup no longer triggers `_initializeAccessControlWithSecret`."
+          "description": "Refactor startup state machine to (1) treat actor initialization failures distinctly from profile loading failures, (2) avoid getting stuck in an error state by wiring Retry to explicitly refetch the patched actor and then refetch/invalidate the current-user profile query, and (3) ensure unauthenticated users never see the startup error screen unless authentication initialization itself fails. Also ensure Retry clears previous startup error state before re-attempting."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Add a new editable actor hook that creates anonymous/authenticated backend actors without `_initializeAccessControlWithSecret`, and update all editable imports to use it instead of `useActor`.",
+      "summary": "Make useGetCallerUserProfile resilient to transient actor/network failures: avoid throwing 'Actor not available', keep missing profile as null success, and apply limited retry for transient failures that surfaces to startup error after exhaustion.",
       "acceptanceCriteria": [
-        "A new hook file (in a non-immutable path) provides `{ actor, isFetching }` with the same shape currently expected by the app.",
-        "`frontend/src/App.tsx` uses the new hook for backend connection state (actor presence) so the startup phase logic works correctly.",
-        "`frontend/src/hooks/useQueries.ts` (and any other editable files that currently import `useActor`) are updated to use the new hook, ensuring all backend calls use the patched actor instance.",
-        "The app behaves the same as before for anonymous users (anonymous actor still created), except it no longer hangs during backend connection."
+        "`useGetCallerUserProfile` no longer produces an error solely due to a short-lived actor unavailability during identity/actor transitions.",
+        "A missing profile still resolves as `null` (not an error) so the app can route to Profile Setup as intended.",
+        "Transient failures (e.g., agent/network) are retried a small number of times with a short delay, and if still failing, the app surfaces the startup error with Retry."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/usePatchedActor.ts",
-          "operation": "create",
-          "description": "Create a new non-immutable React hook that mirrors the existing `{ actor, isFetching }` shape, creates an anonymous actor when not authenticated, creates an authenticated actor when identity exists, and explicitly does not call `_initializeAccessControlWithSecret` or any admin-token utility. Use existing actor creation infrastructure (e.g., `createActorWithConfig`) and keep React Query cache keying consistent with identity changes."
-        },
-        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Replace imports/usage of the immutable `useActor` with the new patched actor hook so all React Query hooks use the patched actor instance for backend calls."
+          "description": "Update `useGetCallerUserProfile` to align with the selected authorization component’s guidance (Verify the component's usage instructions before implementing.): do not throw 'Actor not available' from queryFn; instead short-circuit safely when dependencies (actor/identity) are not ready, ensure missing-profile remains a successful `null`, and configure a limited React Query retry policy for transient/agent/network errors with short retry delay while avoiding retries for non-transient/authorization-like failures."
         },
         {
-          "path": "frontend/src/pages/auth/ProfileSetupPage.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Update to use the new patched actor hook instead of importing `useActor`, ensuring signup/profile setup uses the patched actor instance."
+          "description": "Adjust startup gating logic to rely on the hook’s refined loading/fetched semantics, and ensure that after hook retries are exhausted, the app transitions to a startup error state that offers Retry and can recover."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Improve diagnostics and user-facing messaging for profile-load failures: dev logging with phase + underlying error details, and clear actionable English startup error messages distinguishing backend connection vs profile loading issues.",
+      "acceptanceCriteria": [
+        "In development, console output includes the startup phase and the underlying exception details when profile loading fails.",
+        "The startup error screen message is in English and actionable (e.g., suggests retrying/checking connection) and does not leak raw stack traces to users.",
+        "The Retry action triggers the same recovery behavior as REQ-1 and clears the previous startup error state."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/startup.ts",
+          "operation": "modify",
+          "description": "Extend startup logging helpers to support richer, phase-specific diagnostics (e.g., include a compact, user-safe classification like 'backend connection' vs 'profile load' while still logging full underlying error objects/stacks only in development)."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Improve startup error classification and messages: differentiate backend connection problems (actor init errors/timeouts) from profile loading problems; log the precise phase and underlying exception details in development using the startup utilities; ensure user-facing messages are concise English and actionable (retry/check connection) and never display raw stacks."
+        },
+        {
+          "path": "frontend/src/components/system/StartupScreen.tsx",
+          "operation": "modify",
+          "description": "Enhance the startup error UI to present clearer, user-facing English messaging (optionally with a short title/subtitle distinction for backend connection vs profile load) while keeping details non-technical; ensure the existing Retry action triggers the App-provided recovery behavior and that previous error state is cleared. (Uses shadcn/ui Button/Card; do not modify files under frontend/src/components/ui.)"
         }
       ]
     }

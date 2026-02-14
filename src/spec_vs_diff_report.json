@@ -1,33 +1,35 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T20:59:11.413Z",
-  "summary": "The diff implements a new frontend actor hook (`usePatchedActor`) that creates anonymous/authenticated actors without calling the missing `_initializeAccessControlWithSecret`, and updates key consumers (App and React Query hooks) to use it. No clear missing requirements are visible from the provided diff summary, but some extra behaviors/UI-startup logic appear to have been added beyond the stated scope.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-14T21:39:37.476Z",
+  "summary": "Diff implements new startup diagnostics and error UI (StartupScreen + utils/startup.ts) and makes the current-user profile query more resilient (useQueries.ts). However, key REQ-1 behaviors (working Retry that re-attempts actor init + profile fetch, and correct handling for unauthenticated users) cannot be fully verified because App.tsx is truncated in the diff summary.",
+  "missing_requirements": [
     {
-      "description": "Global invalidation + refetch of (almost) all React Query queries whenever the actor changes.",
-      "reason": "REQ-1/REQ-2 require creating a patched actor hook and updating imports; they do not request broad query invalidation/refetch behavior.",
+      "id": "REQ-1",
+      "requirement": "Ensure the startup/auth flow provides a startup error state with a working Retry action that re-attempts both actor initialization and the current user profile query without a full page reload, and does not show the error screen for unauthenticated users.",
+      "reason": "The necessary orchestration for startup phases, error state, and Retry behavior appears to live in frontend/src/App.tsx, but the file content is truncated in the diff summary. The diff summary does not include the relevant code showing that Retry clears prior startup error state, triggers actor re-initialization, re-queries the profile, and avoids showing startup errors for unauthenticated users.",
       "evidence": [
-        "frontend/src/hooks/usePatchedActor.ts"
-      ]
-    },
-    {
-      "description": "Additional startup-flow logic involving explicit timeouts/splash duration constants (potential broader startup UX changes).",
-      "reason": "Non-goals include not redesigning the startup UI beyond what is necessary; the diff shows new startup timing constants and (per file summary) a more complex startup gate, which may be beyond the minimal fix requested.",
-      "evidence": [
-        "frontend/src/App.tsx",
-        "frontend-file-summaries.txt"
+        "frontend/src/App.tsx (truncated)"
       ]
     }
   ],
-  "confidence": 0.68,
+  "hallucinated_features": [
+    {
+      "description": "Introduced a new hook usePatchedActor that creates an actor via React Query with retries and invalidates/refetches dependent queries when the actor changes.",
+      "reason": "REQ-1/REQ-2/REQ-3 specify behavior changes around startup flow, retries, and diagnostics, but do not explicitly request creation of a new actor hook or broad invalidation/refetch of all non-actor queries as an implementation feature.",
+      "evidence": [
+        "frontend/src/hooks/usePatchedActor.ts"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/App.tsx",
+    "frontend/src/components/system/StartupScreen.tsx",
     "frontend/src/hooks/usePatchedActor.ts",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/auth/ProfileSetupPage.tsx",
+    "frontend/src/utils/startup.ts",
     "project_state.json"
   ]
 }

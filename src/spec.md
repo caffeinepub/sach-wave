@@ -1,11 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the app startup hang on “Connecting to backend…” for logged-in users by removing the frontend’s call to the missing backend admin initialization method.
+**Goal:** Fix the intermittent startup “Unable to load profile” error so authenticated users can recover via an in-app retry (no full page reload), while keeping unauthenticated auth-gate behavior intact.
 
 **Planned changes:**
-- Add a new (non-immutable) actor hook that creates anonymous and authenticated actors without calling `actor._initializeAccessControlWithSecret(...)`, returning `{ actor, isFetching }` in the same shape the app expects.
-- Update editable frontend modules (including `frontend/src/App.tsx` and `frontend/src/hooks/useQueries.ts`) to import and use the new actor hook instead of the immutable `useActor`.
-- Remove/avoid any remaining references to `_initializeAccessControlWithSecret` and related unused admin-token utilities to prevent TypeScript build errors.
+- Update the startup/auth bootstrap flow to show a dedicated startup error state only for authenticated users when profile loading fails intermittently, with a working Retry action.
+- Make Retry re-run both actor initialization and the current-user profile fetch, clearing the previous error state and allowing recovery when the network/backend is available.
+- Harden `useGetCallerUserProfile` to avoid failing solely due to short-lived actor unavailability; keep “missing profile” as a successful `null` result and add a small, limited retry policy for transient/network failures.
+- Improve diagnostics: log underlying error details and startup phase in development, and show an English, actionable error message to users that distinguishes connection issues vs profile-load issues without exposing stack traces.
 
-**User-visible outcome:** When logged in, the app no longer gets stuck on “Connecting to backend…” and proceeds into the main app routes as expected; anonymous behavior remains unchanged.
+**User-visible outcome:** If profile loading fails at startup, authenticated users see a clear English error with a Retry button that can recover without refreshing; unauthenticated users continue to see the normal sign-in/auth gate flow.

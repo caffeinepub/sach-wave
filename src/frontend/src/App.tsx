@@ -18,13 +18,16 @@ import ErrorBoundary from './components/system/ErrorBoundary';
 import StartupScreen from './components/system/StartupScreen';
 import SplashScreen from './components/system/SplashScreen';
 import OnboardingPage from './pages/onboarding/OnboardingPage';
+import AccessCodeGatePage from './pages/access/AccessCodeGatePage';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from 'next-themes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
 import type { StartupPhase } from './utils/startup';
-import { logStartupPhase, logStartupError } from './utils/startup';
+import { logStartupPhase, logStartupError, classifyStartupError } from './utils/startup';
 import { hasCompletedOnboarding } from './utils/onboarding';
+import { isAppUnlocked } from './utils/accessCodeGate';
+import { registerServiceWorker } from './utils/pwa';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -128,22 +131,32 @@ declare module '@tanstack/react-router' {
 }
 
 const ACTOR_INIT_TIMEOUT = 15000; // 15 seconds
-const PROFILE_FETCH_TIMEOUT = 10000; // 10 seconds
 const SPLASH_DURATION = 2000; // 2 seconds
 
 export default function App() {
   const queryClient = useQueryClient();
   const { identity, isInitializing, loginStatus, isLoginError } = useInternetIdentity();
-  const { actor, isFetching: actorFetching } = usePatchedActor();
+  const { actor, isFetching: actorFetching, isError: actorError, error: actorErrorDetails, refetch: refetchActor } = usePatchedActor();
   const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched, error: profileError } = useGetCallerUserProfile();
 
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [startupPhase, setStartupPhase] = useState<StartupPhase>('initializing-identity');
-  const [startupError, setStartupError] = useState<{ message: string } | null>(null);
+  const [startupError, setStartupError] = useState<{ message: string; phase: StartupPhase } | null>(null);
   const [actorInitStartTime, setActorInitStartTime] = useState<number>(Date.now());
 
   const isAuthenticated = !!identity;
+
+  // Register service worker for PWA
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
+  // Check access code on mount
+  useEffect(() => {
+    setIsUnlocked(isAppUnlocked());
+  }, []);
 
   // Handle splash screen
   useEffect(() => {
@@ -158,83 +171,89 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Track startup phases
+  // Track startup phases and errors
   useEffect(() => {
     if (isInitializing) {
       setStartupPhase('initializing-identity');
       logStartupPhase('initializing-identity');
     } else if (isLoginError) {
+      const phase = 'initializing-identity';
       setStartupPhase('error');
       setStartupError({
         message: 'Failed to initialize authentication. Please check your connection and try again.',
+        phase,
       });
       logStartupError({
-        phase: 'initializing-identity',
+        phase,
         message: 'Internet Identity initialization failed',
       });
-    } else if (isAuthenticated && !actor) {
+    } else if (!isAuthenticated && !isInitializing) {
+      // Not authenticated and not initializing = ready to show auth gate
+      setStartupPhase('ready');
+      logStartupPhase('ready', 'Ready for authentication');
+    } else if (isAuthenticated && actorError) {
+      // Actor initialization failed
+      const phase = 'connecting-backend';
+      const errorClassification = classifyStartupError(actorErrorDetails, phase);
+      setStartupPhase('error');
+      setStartupError({
+        message: errorClassification.userMessage,
+        phase,
+      });
+      logStartupError({
+        phase,
+        message: errorClassification.devMessage,
+        error: actorErrorDetails as Error,
+      });
+    } else if (isAuthenticated && !actor && !actorError) {
       setStartupPhase('connecting-backend');
       logStartupPhase('connecting-backend');
     } else if (isAuthenticated && actor && profileLoading && !profileFetched) {
       setStartupPhase('loading-profile');
       logStartupPhase('loading-profile');
+    } else if (isAuthenticated && actor && profileError) {
+      // Profile loading failed (only real errors, not missing profiles)
+      const errorMessage = String(profileError);
+      const isAuthError = errorMessage.includes('Unauthorized') || errorMessage.includes('permission');
+      
+      if (!isAuthError) {
+        const phase = 'loading-profile';
+        const errorClassification = classifyStartupError(profileError, phase);
+        setStartupPhase('error');
+        setStartupError({
+          message: errorClassification.userMessage,
+          phase,
+        });
+        logStartupError({
+          phase,
+          message: errorClassification.devMessage,
+          error: profileError as Error,
+        });
+      }
     } else if (isAuthenticated && actor && profileFetched) {
       setStartupPhase('ready');
       logStartupPhase('ready', 'Startup complete');
     }
-  }, [isInitializing, isLoginError, isAuthenticated, actor, profileLoading, profileFetched]);
+  }, [isInitializing, isLoginError, isAuthenticated, actor, actorError, actorErrorDetails, profileLoading, profileFetched, profileError]);
 
   // Watchdog for actor initialization timeout
   useEffect(() => {
-    if (isAuthenticated && !actor && startupPhase === 'connecting-backend') {
+    if (isAuthenticated && !actor && !actorError && startupPhase === 'connecting-backend') {
       const elapsed = Date.now() - actorInitStartTime;
       if (elapsed > ACTOR_INIT_TIMEOUT) {
+        const phase = 'connecting-backend';
         setStartupPhase('error');
         setStartupError({
           message: 'Backend connection timed out. Please check your network and try again.',
+          phase,
         });
         logStartupError({
-          phase: 'connecting-backend',
+          phase,
           message: 'Actor initialization timeout',
         });
       }
     }
-  }, [isAuthenticated, actor, startupPhase, actorInitStartTime]);
-
-  // Watchdog for profile fetch timeout
-  useEffect(() => {
-    if (isAuthenticated && actor && profileLoading && !profileFetched && startupPhase === 'loading-profile') {
-      const timeout = setTimeout(() => {
-        if (profileLoading && !profileFetched) {
-          setStartupPhase('error');
-          setStartupError({
-            message: 'Profile loading timed out. Please try again.',
-          });
-          logStartupError({
-            phase: 'loading-profile',
-            message: 'Profile fetch timeout',
-          });
-        }
-      }, PROFILE_FETCH_TIMEOUT);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isAuthenticated, actor, profileLoading, profileFetched, startupPhase]);
-
-  // Handle profile fetch errors
-  useEffect(() => {
-    if (profileError && isAuthenticated && actor) {
-      setStartupPhase('error');
-      setStartupError({
-        message: 'Failed to load your profile. Please try again.',
-      });
-      logStartupError({
-        phase: 'loading-profile',
-        message: 'Profile fetch error',
-        error: profileError as Error,
-      });
-    }
-  }, [profileError, isAuthenticated, actor]);
+  }, [isAuthenticated, actor, actorError, startupPhase, actorInitStartTime]);
 
   // Reset actor init start time when authentication changes
   useEffect(() => {
@@ -243,15 +262,34 @@ export default function App() {
     }
   }, [isAuthenticated]);
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
+    // Clear previous error state
     setStartupError(null);
     setStartupPhase('initializing-identity');
     setActorInitStartTime(Date.now());
     
-    // Clear all caches and reload
-    queryClient.clear();
-    window.location.reload();
+    // Explicitly refetch actor and profile
+    try {
+      await refetchActor();
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    } catch (error) {
+      console.error('Retry failed:', error);
+    }
   };
+
+  const handleUnlock = () => {
+    setIsUnlocked(true);
+  };
+
+  // Show access code gate first
+  if (!isUnlocked) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <AccessCodeGatePage onUnlock={handleUnlock} />
+        <Toaster />
+      </ThemeProvider>
+    );
+  }
 
   // Show splash screen
   if (showSplash) {
@@ -274,7 +312,9 @@ export default function App() {
   }
 
   // Show startup screen during initialization or if there's an error
-  if (startupPhase !== 'ready' || startupError) {
+  // Don't show startup screen if not authenticated and not initializing
+  const shouldShowStartup = startupError || (startupPhase !== 'ready' && (isInitializing || isAuthenticated));
+  if (shouldShowStartup) {
     return (
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <StartupScreen

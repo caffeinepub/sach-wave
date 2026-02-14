@@ -1,59 +1,72 @@
 {
   "kind": "build_request",
-  "title": "Fix startup hang on “Connecting to backend” by removing missing admin init call",
-  "priority": "high",
+  "title": "Fix intermittent “Unable to load profile” startup error",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Stop frontend startup from calling the missing backend method `_initializeAccessControlWithSecret` so authenticated users no longer get stuck on the “Connecting to backend…” startup phase.",
+      "text": "Fix the startup/auth flow so the app does not get stuck on a startup error when the current user profile fetch fails intermittently; the user must be able to retry successfully without a full page reload.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-6"
+          "msg-3"
         ],
         "quotes": [
-          "It stuck in loding it says connection to backend and stuck",
-          "Ok do it"
+          "It's saying unable to load profile again fix this"
         ]
       },
       "acceptanceCriteria": [
-        "When logged in, the app progresses past “Connecting to backend…” and reaches AuthGate / main app routes without hanging.",
-        "No runtime call is made to `actor._initializeAccessControlWithSecret(...)` during actor creation.",
-        "No TypeScript build errors occur due to references to `_initializeAccessControlWithSecret` or unused admin-token utilities."
+        "When an authenticated user hits an intermittent profile-load failure, the app shows a startup error state with a working Retry action (no hard refresh required).",
+        "Clicking Retry re-attempts both actor initialization and the current user profile query and can recover to a usable app state when the network/backend is available.",
+        "The app does not incorrectly show the error screen for unauthenticated users; unauthenticated users must continue to see the normal auth gate flow."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Because `frontend/src/hooks/useActor.ts` is immutable, implement a new non-immutable actor hook that creates the backend actor (anonymous and authenticated) without calling `_initializeAccessControlWithSecret`, and update all editable frontend modules to import and use the new hook instead of `useActor`.",
+      "text": "Make the current-user profile React Query hook resilient to transient errors by avoiding throwing 'Actor not available' from the profile query function, and by using a limited retry policy for network/transient failures while keeping the missing-profile case as a successful null result.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5",
-          "msg-6"
+          "msg-3"
         ],
         "quotes": [
-          "I suggest the simplest and safest option: remove the frontend call to _initializeAccessControlWithSecret.",
-          "Ok do it"
+          "It's saying unable to load profile again fix this"
         ]
       },
       "acceptanceCriteria": [
-        "A new hook file (in a non-immutable path) provides `{ actor, isFetching }` with the same shape currently expected by the app.",
-        "`frontend/src/App.tsx` uses the new hook for backend connection state (actor presence) so the startup phase logic works correctly.",
-        "`frontend/src/hooks/useQueries.ts` (and any other editable files that currently import `useActor`) are updated to use the new hook, ensuring all backend calls use the patched actor instance.",
-        "The app behaves the same as before for anonymous users (anonymous actor still created), except it no longer hangs during backend connection."
+        "`useGetCallerUserProfile` no longer produces an error solely due to a short-lived actor unavailability during identity/actor transitions.",
+        "A missing profile still resolves as `null` (not an error) so the app can route to Profile Setup as intended.",
+        "Transient failures (e.g., agent/network) are retried a small number of times with a short delay, and if still failing, the app surfaces the startup error with Retry."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Improve diagnostics for profile-load failures without blocking valid flows: log the underlying error details in development and show a clear, user-facing English error message that distinguishes backend connection issues vs profile loading issues.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "It's saying unable to load profile again fix this"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In development, console output includes the startup phase and the underlying exception details when profile loading fails.",
+        "The startup error screen message is in English and actionable (e.g., suggests retrying/checking connection) and does not leak raw stack traces to users.",
+        "The Retry action triggers the same recovery behavior as REQ-1 and clears the previous startup error state."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under `frontend/src/hooks/useActor.ts`, `frontend/src/hooks/useInternetIdentity.ts(x)`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or anything under `frontend/src/components/ui` (immutable paths).",
-    "Do not add a new backend method `_initializeAccessControlWithSecret`; the fix must be frontend-only.",
-    "Backend must remain single-actor (all Motoko logic stays in `backend/main.mo`), and no state migration is required for this change."
+    "Do not modify files under frontend/src/components/ui (read-only UI components).",
+    "Do not modify immutable hook/bootstrap files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx.",
+    "Backend must remain a single Motoko actor in backend/main.mo; only add migration.mo if state schema changes (not expected for this fix)."
   ],
   "nonGoals": [
-    "Implementing or reintroducing admin-mode initialization via a secret token.",
-    "Changing authentication (Internet Identity) behavior.",
-    "Redesigning the startup UI beyond what is necessary to verify the hang is resolved."
+    "Adding new authentication providers (only Internet Identity).",
+    "Adding new backend data models or changing user profile schema.",
+    "Implementing real-time updates (no websockets)."
   ],
   "imageRequirements": {
     "required": [],
