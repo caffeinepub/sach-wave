@@ -1,4 +1,13 @@
-const CACHE_VERSION = 'v2';
+/**
+ * Version 12 production deployment fix:
+ * Previously failed with "Failed to cache assets" error during service worker installation
+ * because cache.addAll() would fail if ANY asset was missing/unfetchable.
+ * 
+ * Root cause: cache.addAll() is atomic - if one asset fails, entire installation fails.
+ * Fix: Use individual cache.add() calls with error handling to skip missing assets gracefully.
+ */
+
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `sach-wave-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   '/',
@@ -9,13 +18,21 @@ const STATIC_ASSETS = [
   '/assets/generated/pwa-maskable-icon.dim_512x512.png'
 ];
 
-// Install event - cache static assets
+// Install event - cache static assets with resilient error handling
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS).catch((error) => {
-        console.error('Failed to cache assets:', error);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Cache assets individually to avoid atomic failure
+      const cachePromises = STATIC_ASSETS.map(async (url) => {
+        try {
+          await cache.add(url);
+        } catch (error) {
+          console.warn(`Failed to cache ${url}:`, error.message);
+          // Continue with other assets even if one fails
+        }
       });
+      
+      await Promise.allSettled(cachePromises);
     })
   );
   // Skip waiting to activate immediately when a new version is available

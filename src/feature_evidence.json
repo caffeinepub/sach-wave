@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-promote-the-currently-deployed-draft-version-of-the-app-to-the-live-version-so-that-the-live-app-url-serves-the-latest-draft-build",
-      "featureTitle": "Promote the currently deployed draft version of the app to the live version so that the live app URL serves the latest draft build.",
+      "featureId": "feature-improve-frontend-handling-of-profile-load-failures-so-the-profile-page-never-appears-stuck-explicitly-handle-query-errors-for-loading-a-profile-e-g-backend-traps-agent-errors-and-provide-a-clear-error-state-with-a-retry-action",
+      "featureTitle": "Improve frontend handling of profile load failures so the Profile page never appears stuck: explicitly handle query errors for loading a profile (e.g., backend traps/agent errors) and provide a clear error state with a retry action.",
       "files": [
-        "frontend/DEPLOYMENT.md",
-        "frontend/public/sw.js",
-        "frontend/src/utils/pwa.ts"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/profile/ProfilePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,7 +18,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-3"
       ],
       "confidence": "high"
     }

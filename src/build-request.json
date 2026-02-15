@@ -1,33 +1,68 @@
 {
   "kind": "build_request",
-  "title": "Promote current draft deployment to live",
-  "priority": "normal",
+  "title": "Fix profile page failing to load",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-4",
-      "text": "Promote the currently deployed draft version of the app to the live version so that the live app URL serves the latest draft build.",
-      "target": "unknown",
+      "id": "REQ-1",
+      "text": "Fix backend authorization so signed-up users can successfully load their own profile via getCallerUserProfile without trapping due to missing permissions.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "recent-9"
         ],
         "quotes": [
-          "Push it live"
+          "Now fix the unable profile page lode issue"
         ]
       },
       "acceptanceCriteria": [
-        "The latest draft build is promoted to live successfully.",
-        "Opening the live app URL shows the same app version and behavior as the most recent draft build.",
-        "No new 'draft-only' version remains as the active live deployment after promotion."
+        "After a user completes signup, calling getCallerUserProfile returns ?UserProfile for that same user (does not trap with an Unauthorized error).",
+        "Existing users created before this fix can still load their profiles after upgrade (no data loss)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Fix backend profile visibility so the profile page can load any user profile that the frontend routes to (e.g., from Search or Messages) without trapping for non-admin viewers, while still preventing banned profiles from being returned.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "recent-9"
+        ],
+        "quotes": [
+          "Now fix the unable profile page lode issue"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Calling getUserProfile(<someOtherUserPrincipal>) as a normal authenticated user returns that user's profile (or null if it does not exist), and does not trap with an Unauthorized error.",
+        "If the requested user's role is banned, getUserProfile returns null (or an equivalent non-trapping 'not available' response) so the UI can show a not-found style state."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Improve frontend handling of profile load failures so the Profile page never appears stuck: explicitly handle query errors for loading a profile (e.g., backend traps/agent errors) and provide a clear error state with a retry action.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-9"
+        ],
+        "quotes": [
+          "Now fix the unable profile page lode issue"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When the profile fetch fails (network/agent error or backend trap), the Profile page displays an error UI (in English) with a Retry button that re-attempts loading.",
+        "When the profile fetch succeeds, the Profile page renders as it does today.",
+        "When the profile is genuinely missing (null response), the Profile page shows the existing 'Profile not found' empty state (not an error state)."
       ]
     }
   ],
   "constraints": [
-    "Use English for any user-facing text."
+    "Backend must remain a single Motoko actor in backend/main.mo.",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Implement App Market / marketplace publishing (formal listing).",
-    "Add new product features unrelated to promoting the draft deployment to live."
+    "Implementing new authentication providers (only Internet Identity is in scope).",
+    "Adding real-time profile updates or WebSocket-based refresh."
   ],
   "imageRequirements": {
     "required": [],

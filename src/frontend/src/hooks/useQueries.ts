@@ -64,10 +64,31 @@ export function useGetUserProfile(userId: string) {
   return useQuery<UserProfile | null>({
     queryKey: ['userProfile', userId],
     queryFn: async () => {
-      if (!actor) return null;
-      return actor.getUserProfile(Principal.fromText(userId));
+      if (!actor) {
+        throw new Error('Backend connection not available');
+      }
+      
+      try {
+        const profile = await actor.getUserProfile(Principal.fromText(userId));
+        // null is a valid response (user not found or banned)
+        return profile;
+      } catch (error: any) {
+        const errorMessage = String(error);
+        
+        // If user is banned or doesn't exist, backend returns null (not an error)
+        // Only network/agent errors should be thrown
+        if (errorMessage.includes('not found') || errorMessage.includes('Invalid principal')) {
+          return null;
+        }
+        
+        // Rethrow other errors for retry logic
+        throw error;
+      }
     },
     enabled: !!actor && !isFetching && !!userId,
+    // Limit automatic retries - user can manually retry via UI
+    retry: 1,
+    retryDelay: 1000,
   });
 }
 

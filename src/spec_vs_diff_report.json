@@ -1,63 +1,64 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-15T04:07:28.738Z",
-  "summary": "Diff adds deployment documentation and implements aggressive service-worker update/reload behavior, plus substantial unrelated frontend/backend changes. It does not show any implementation that actually promotes a draft deployment to live (REQ-4), beyond describing manual steps.",
+  "generatedAt": "2026-02-15T04:43:12.470Z",
+  "summary": "REQ-1 and REQ-3 appear to be addressed (backend caller-profile query no longer enforces authorization; Profile page now renders an explicit error state with retry). REQ-1’s upgrade/no-data-loss acceptance criterion is not evidenced in the diff. REQ-2’s required non-admin visibility + banned-user-null behavior cannot be confirmed because the getUserProfile implementation is truncated.",
   "missing_requirements": [
     {
-      "id": "REQ-4",
-      "requirement": "Promote the currently deployed draft version of the app to the live version so that the live app URL serves the latest draft build.",
-      "reason": "No code/config changes in the diff summary indicate an actual deployment promotion mechanism (e.g., CI/CD step, hosting config, CLI/script, API call, or infrastructure change) that would switch the live URL to serve the latest draft build. The only explicit mention of promotion is procedural text in a markdown guide.",
+      "id": "REQ-1",
+      "requirement": "Existing users created before this fix can still load their profiles after upgrade (no data loss).",
+      "reason": "The diff shows getCallerUserProfile now returns userProfiles.get(caller), and adds a no-op migration module, but provides no evidence of stable storage/migration logic ensuring pre-existing userProfiles data persists across upgrade.",
       "evidence": [
-        "frontend/DEPLOYMENT.md"
+        "backend/main.mo",
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Fix backend profile visibility so getUserProfile(<someOtherUserPrincipal>) as a normal authenticated user returns that user's profile (or null if it does not exist) without trapping Unauthorized, and returns null for banned users.",
+      "reason": "backend/main.mo is truncated right after a comment about allowing viewing non-banned profiles; the actual getUserProfile function body/authorization logic and banned handling are not visible in the provided diff summary, so implementation cannot be verified.",
+      "evidence": [
+        "backend/main.mo"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Service worker auto-update logic that checks for updates every minute, forces skip-waiting, and reloads the page on controller change.",
-      "reason": "Not requested by REQ-4 (draft-to-live promotion). This is a separate PWA runtime behavior change.",
+      "description": "Added/changed extensive 'premium glassmorphism' UI/theme updates (global styles, Tailwind tokens, animated rings, premium shadows, layout changes) beyond the requested profile-load failure handling.",
+      "reason": "BuildRequest only asks to improve error handling on the Profile page and make backend profile calls non-trapping; it does not request a broad UI redesign/theme overhaul.",
       "evidence": [
-        "frontend/src/utils/pwa.ts",
-        "frontend/public/sw.js"
+        "frontend-file-summaries.txt (frontend/src/index.css, frontend/tailwind.config.js, frontend/src/layout/AppShell.tsx, frontend/src/pages/profile/ProfilePage.tsx summary)"
       ]
     },
     {
-      "description": "Creation of a detailed deployment guide with troubleshooting, rollback procedure, and service worker cache/version guidance.",
-      "reason": "BuildRequest asks to promote draft to live; adding documentation is not requested as part of REQ-4 implementation (and does not itself accomplish promotion).",
+      "description": "Introduced new global startup flow/error classification and dedicated startup screen/error boundary components.",
+      "reason": "Not requested by any requirement; REQ-3 is limited to Profile page profile-fetch error handling with retry.",
       "evidence": [
-        "frontend/DEPLOYMENT.md"
+        "frontend-file-summaries.txt (frontend/src/App.tsx, frontend/src/utils/startup.ts, frontend/src/components/system/StartupScreen.tsx, frontend/src/components/system/ErrorBoundary.tsx)"
       ]
     },
     {
-      "description": "Substantial UI/UX redesign and feature changes (premium glassmorphism theme, badges, story viewer UI, admin dashboard changes, messages/notifications click handling, startup error handling, etc.).",
-      "reason": "Non-goal: no new product features unrelated to promoting the draft deployment to live. These appear unrelated to deployment promotion.",
+      "description": "Added/expanded reusable page state component system (loading/error/empty/skeleton) across the app.",
+      "reason": "REQ-3 only requires Profile page not to appear stuck and to show an error with retry; a generalized state framework is not requested.",
       "evidence": [
-        "frontend-file-summaries.txt"
+        "frontend-file-summaries.txt (frontend/src/components/system/PageState.tsx)"
       ]
     },
     {
-      "description": "Backend canister/code changes in backend/main.mo (user/profile/post/story/message/notification/announcement logic and authorization/storage mixins shown).",
-      "reason": "Not requested for promoting draft deployment to live; appears to be general application logic work unrelated to deployment promotion.",
+      "description": "Added message conversation 'real-time polling' behavior.",
+      "reason": "Not requested; while the non-goal mentions no WebSocket-based refresh for profiles, implementing polling for messages is still an unrequested feature in this change set.",
       "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "description": "Addition of project_state.json entries describing future feature requests (e.g., App Market publishing) and deployment workflow items marked pending.",
-      "reason": "Not requested by REQ-4; also mentions App Market publishing which is explicitly a non-goal.",
-      "evidence": [
-        "project_state.json"
+        "frontend-file-summaries.txt (frontend/src/pages/messages/ConversationPage.tsx)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/DEPLOYMENT.md",
-    "frontend/public/sw.js",
-    "frontend/src/utils/pwa.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/profile/ProfilePage.tsx",
     "project_state.json"
   ]
 }

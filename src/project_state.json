@@ -1,18 +1,19 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project now involves an app deployment workflow: moving draft versions to live for sharing, with interest in eventual App Market publishing.",
-  "architectural_notes": [
-    "Versioning model includes draft vs live versions; deployment promotes a draft to live without changing the URL."
+  "summary": "Project is an app experiencing deployment/build instability and a profile page that fails to load due to backend not returning user profile data.",
+  "architectural_notes": [],
+  "known_issues": [
+    "Profile page unable to load (backend not returning user profile data).",
+    "Deployments/builds intermittently failing; latest fixes may not go live reliably."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-promote-the-currently-deployed-draft-version-of-the-app-to-the-live-version-so-that-the-live-app-url-serves-the-latest-draft-build",
-      "title": "Promote the currently deployed draft version of the app to the live version so that the live app URL serves the latest draft build.",
+      "id": "feature-improve-frontend-handling-of-profile-load-failures-so-the-profile-page-never-appears-stuck-explicitly-handle-query-errors-for-loading-a-profile-e-g-backend-traps-agent-errors-and-provide-a-clear-error-state-with-a-retry-action",
+      "title": "Improve frontend handling of profile load failures so the Profile page never appears stuck: explicitly handle query errors for loading a profile (e.g., backend traps/agent errors) and provide a clear error state with a retry action.",
       "reqIds": [
-        "REQ-4"
+        "REQ-3"
       ],
       "version": 1
     }
@@ -20,18 +21,22 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Provide a \"Push Draft to Live\" deployment action to promote the current draft version to live at the same URL.",
-      "reqIds": [],
+      "summary": "Fix backend authorization so signed-up users can successfully load their own profile via getCallerUserProfile without trapping due to missing permissions.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Add support for publishing apps to an App Market (formal marketplace publishing), beyond sharing live app links.",
-      "reqIds": [],
+      "summary": "Fix backend profile visibility so the profile page can load any user profile that the frontend routes to (e.g., from Search or Messages) without trapping for non-admin viewers, while still preventing banned profiles from being returned.",
+      "reqIds": [
+        "REQ-2"
+      ],
       "status": "pending"
     }
   ],
-  "projectName": "Promote current draft deployment to live",
+  "projectName": "Fix profile page failing to load",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

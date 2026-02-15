@@ -10,13 +10,24 @@ import EditProfileDialog from '../../components/profile/EditProfileDialog';
 import MediaPost from '../../components/posts/MediaPost';
 import RoleBadge from '../../components/system/RoleBadge';
 import { UserRole } from '../../backend';
+import { ErrorState } from '../../components/system/PageState';
 
 export default function ProfilePage() {
   const { userId } = useParams({ from: '/authenticated/profile/$userId' });
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
-  const { data: profile, isLoading: profileLoading } = useGetUserProfile(userId);
-  const { data: posts, isLoading: postsLoading } = useGetPostsByUser(userId);
+  const { 
+    data: profile, 
+    isLoading: profileLoading, 
+    isError: profileError,
+    error: profileErrorObj,
+    refetch: refetchProfile 
+  } = useGetUserProfile(userId);
+  const { 
+    data: posts, 
+    isLoading: postsLoading,
+    refetch: refetchPosts 
+  } = useGetPostsByUser(userId);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
   const isOwnProfile = identity?.getPrincipal().toString() === userId;
@@ -25,6 +36,12 @@ export default function ProfilePage() {
     navigate({ to: `/messages/${userId}` });
   };
 
+  const handleRetry = async () => {
+    await refetchProfile();
+    await refetchPosts();
+  };
+
+  // Show loading state
   if (profileLoading) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -39,6 +56,22 @@ export default function ProfilePage() {
     );
   }
 
+  // Show error state with retry button
+  if (profileError) {
+    const errorMessage = profileErrorObj 
+      ? String(profileErrorObj).includes('connection') || String(profileErrorObj).includes('network')
+        ? 'Unable to connect to the server. Please check your connection and try again.'
+        : 'Failed to load profile. Please try again.'
+      : 'Failed to load profile. Please try again.';
+
+    return (
+      <div className="max-w-4xl mx-auto">
+        <ErrorState message={errorMessage} onRetry={handleRetry} />
+      </div>
+    );
+  }
+
+  // Show not found state (only when profile is genuinely null/missing)
   if (!profile) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -68,40 +101,40 @@ export default function ProfilePage() {
               </Avatar>
             </div>
 
-            {/* Name and Role Badge */}
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-4xl font-bold">{profile.name}</h1>
+            {/* Name with Badge */}
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className="text-4xl font-bold gradient-text">{profile.name}</h1>
               {shouldShowBadge && (
                 <RoleBadge role={profile.role === UserRole.owner ? 'owner' : 'admin'} />
               )}
             </div>
-            
-            <p className="text-muted-foreground mb-4 text-lg">
-              {profile.classInfo.className} • {Number(profile.classInfo.year)}
+
+            {/* Class Info */}
+            <p className="text-muted-foreground mb-1">
+              {profile.classInfo.className} • Class of {profile.classInfo.year.toString()}
             </p>
 
+            {/* Bio */}
             {profile.bio && (
-              <p className="text-sm text-muted-foreground max-w-md mb-6 leading-relaxed">
-                {profile.bio}
-              </p>
+              <p className="text-foreground/80 mt-4 max-w-md">{profile.bio}</p>
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-6">
               {isOwnProfile ? (
                 <Button
                   onClick={() => setShowEditProfile(true)}
-                  className="rounded-2xl bg-accent-gradient hover:shadow-glow-blue transition-all press-feedback px-6 py-6 text-base font-semibold"
+                  className="bg-accent-gradient hover:opacity-90 text-white shadow-glow-blue rounded-2xl px-6"
                 >
-                  <Edit className="h-5 w-5 mr-2" strokeWidth={2} />
+                  <Edit className="h-4 w-4 mr-2" />
                   Edit Profile
                 </Button>
               ) : (
                 <Button
                   onClick={handleMessage}
-                  className="rounded-2xl bg-accent-gradient hover:shadow-glow-blue transition-all press-feedback px-6 py-6 text-base font-semibold"
+                  className="bg-accent-gradient hover:opacity-90 text-white shadow-glow-blue rounded-2xl px-6"
                 >
-                  <MessageCircle className="h-5 w-5 mr-2" strokeWidth={2} />
+                  <MessageCircle className="h-4 w-4 mr-2" />
                   Message
                 </Button>
               )}
@@ -110,40 +143,46 @@ export default function ProfilePage() {
         </div>
 
         {/* Posts Grid */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Posts</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4 gradient-text">Posts</h2>
           {postsLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Skeleton key={i} className="aspect-square rounded-2xl bg-white/10 animate-shimmer" />
+            <div className="grid grid-cols-3 gap-2">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-2xl bg-white/10" />
               ))}
             </div>
-          ) : !posts || posts.length === 0 ? (
-            <div className="glass-surface-elevated rounded-3xl p-8 text-center shadow-premium">
-              <p className="text-muted-foreground">No posts yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          ) : posts && posts.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
               {posts.map((post) => (
-                <div key={post.id.toString()} className="aspect-square rounded-2xl overflow-hidden glass-surface border border-white/10 hover:shadow-glow-blue transition-all press-feedback">
+                <div
+                  key={post.id.toString()}
+                  className="aspect-square glass-surface rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform shadow-premium"
+                >
                   {post.media ? (
-                    <MediaPost
-                      mediaUrl={post.media.getDirectURL()}
-                      isVideo={post.media.getDirectURL().includes('video')}
-                      alt="Post"
+                    <MediaPost 
+                      mediaUrl={post.media.getDirectURL()} 
+                      isVideo={false}
+                      alt={`Post by ${profile.name}`}
                     />
                   ) : (
-                    <div className="w-full h-full bg-accent-gradient flex items-center justify-center p-4">
-                      <p className="text-white text-center text-sm line-clamp-4 font-medium">{post.content}</p>
+                    <div className="w-full h-full flex items-center justify-center p-4 bg-accent-gradient/10">
+                      <p className="text-sm text-center line-clamp-6 text-foreground/80">
+                        {post.content}
+                      </p>
                     </div>
                   )}
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="glass-surface-elevated rounded-3xl p-8 text-center shadow-premium">
+              <p className="text-muted-foreground">No posts yet</p>
+            </div>
           )}
         </div>
       </div>
 
+      {/* Edit Profile Dialog */}
       {isOwnProfile && profile && (
         <EditProfileDialog
           open={showEditProfile}

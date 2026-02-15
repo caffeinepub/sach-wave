@@ -1,31 +1,26 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Promote draft deployment to live (frontend cache/update readiness)",
+  "title": "Profile page: never-stuck loading with explicit error + retry",
   "requirements": [
     {
-      "id": "REQ-4",
-      "summary": "Ensure the live URL reliably serves the most recently deployed build by preventing stale PWA/service-worker caches and providing clear promotion steps.",
+      "id": "REQ-3",
+      "summary": "Add explicit error handling and retry UI for profile fetch failures so the Profile page never appears stuck, while keeping the existing not-found state for genuine null profiles.",
       "acceptanceCriteria": [
-        "The latest draft build is promoted to live successfully.",
-        "Opening the live app URL shows the same app version and behavior as the most recent draft build.",
-        "No new 'draft-only' version remains as the active live deployment after promotion."
+        "When the profile fetch fails (network/agent error or backend trap), the Profile page displays an error UI (in English) with a Retry button that re-attempts loading.",
+        "When the profile fetch succeeds, the Profile page renders as it does today.",
+        "When the profile is genuinely missing (null response), the Profile page shows the existing 'Profile not found' empty state (not an error state)."
       ],
       "file_operations": [
         {
-          "path": "frontend/public/sw.js",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Update service worker cache/update behavior to avoid stale assets after a draft-to-live promotion: bump cache name/versioning, add a message handler to support immediate activation (skip-waiting) when a new worker is installed, and ensure old caches are cleaned so the live URL fetches the newest build assets."
+          "description": "Update the useGetUserProfile query to (1) avoid misclassifying thrown query errors as a null profile, (2) treat only truly missing/invalid-user cases as null (to preserve the current 'Profile not found' flow), and (3) disable/limit automatic retries so the Profile page can deterministically show an error state and rely on an explicit user-driven Retry (via refetch)."
         },
         {
-          "path": "frontend/src/utils/pwa.ts",
+          "path": "frontend/src/pages/profile/ProfilePage.tsx",
           "operation": "modify",
-          "description": "Enhance service worker registration to detect updates and trigger a controlled refresh to the newest live build (e.g., when a waiting worker exists, request skip-waiting and reload after controller change). Keep any user-facing text in English."
-        },
-        {
-          "path": "frontend/DEPLOYMENT.md",
-          "operation": "create",
-          "description": "Add concise, English documentation describing the operational steps/checklist to promote the current draft deployment to live and verify the live URL is serving the latest build (including guidance to validate service worker update behavior and hard-refresh expectations)."
+          "description": "Use the query error state from useGetUserProfile (isError/error) to render a clear error UI instead of falling through to the 'Profile not found' view. Use the existing PageState.ErrorState component to show an English error message and a Retry button that triggers a re-attempt (refetch the profile query, and optionally refetch dependent data such as posts when appropriate) so the page never appears stuck."
         }
       ]
     }

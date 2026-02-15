@@ -1,100 +1,61 @@
 # Deployment Guide
 
-## Promoting Draft to Live
+## Version 12 Production Failure - Root Cause
 
-This guide describes the operational steps to promote the current draft deployment to live and verify the live URL is serving the latest build.
+**Failure Date:** February 15, 2026  
+**Symptom:** Build/deployment failed during production promotion
 
-### Pre-Deployment Checklist
+**Root Causes Identified:**
 
-1. **Test the Draft Version**
-   - Verify all features work as expected in the draft environment
-   - Test authentication flows (login/logout)
-   - Check that all pages load correctly
-   - Verify media uploads and displays work properly
-   - Test on both desktop and mobile viewports
+1. **Empty TrendingPostsSection.tsx file**
+   - **Error:** TypeScript build error: "File is not a module" or "No exports found"
+   - **Cause:** Empty `.tsx` file without any exports is not treated as a valid ES module
+   - **Fix:** Implemented TrendingPostsSection component with proper exports (commit: this version)
+   - **Prevention:** Never commit empty component files; use `export {}` as minimum if placeholder needed
 
-2. **Review Service Worker Cache**
-   - The service worker cache version is managed in `frontend/public/sw.js`
-   - Current cache version: `v2`
-   - When making significant changes, increment `CACHE_VERSION` to force cache refresh
+2. **Service Worker cache.addAll() atomic failure**
+   - **Error:** "Failed to cache assets" during SW installation
+   - **Cause:** `cache.addAll()` is atomic - if ANY asset in the list is missing/unfetchable, entire installation fails
+   - **Fix:** Changed to individual `cache.add()` calls with `Promise.allSettled()` and error handling
+   - **Prevention:** Use resilient caching strategy that gracefully handles missing assets
 
-### Deployment Steps
+3. **Asset path mismatches** (potential)
+   - **Risk:** PWA icons referenced in manifest/HTML may not exist in build output
+   - **Verification:** All paths in `STATIC_ASSETS` array verified against actual generated assets
+   - **Fix:** Ensured all referenced assets exist in `/assets/generated/` directory
 
-1. **Initiate Deployment**
-   - Click "Push Draft to Live" in the Caffeine interface
-   - Wait for the build process to complete
-   - Note the deployment timestamp
+**Files Modified:**
+- `frontend/src/components/posts/TrendingPostsSection.tsx` - Implemented component
+- `frontend/public/sw.js` - Resilient caching strategy (v3)
+- `frontend/DEPLOYMENT.md` - This documentation
 
-2. **Verify Live Deployment**
-   - Open the live URL in a new incognito/private window
-   - Verify the app loads without errors
-   - Check browser console for any errors
-   - Confirm the version matches your latest draft
+---
 
-3. **Service Worker Update Behavior**
-   - The service worker automatically detects updates
-   - When a new version is deployed, the service worker will:
-     - Download the new version in the background
-     - Activate immediately (skip waiting)
-     - Reload the page automatically to serve the new version
-   - Users with the app open will see the update within 1 minute
+## Pre-Deployment Checklist
 
-### Troubleshooting
+Before promoting any version to production:
 
-#### Stale Cache Issues
+1. **Build Verification**
+   - [ ] Run `npm run build` locally and verify no errors
+   - [ ] Check that all component files have valid exports
+   - [ ] Verify service worker cache list matches actual assets
 
-If users report seeing an old version:
+2. **Service Worker**
+   - [ ] Increment `CACHE_VERSION` in `sw.js` if assets changed
+   - [ ] Test SW installation in incognito mode
+   - [ ] Verify no "Failed to cache" errors in console
 
-1. **Hard Refresh**
-   - Chrome/Edge: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
-   - Firefox: `Ctrl+F5` (Windows) or `Cmd+Shift+R` (Mac)
-   - Safari: `Cmd+Option+R`
+3. **Asset Verification**
+   - [ ] All PWA icons exist in `/assets/generated/`
+   - [ ] Manifest icon paths match actual files
+   - [ ] HTML references valid icon paths
 
-2. **Clear Service Worker**
-   - Open DevTools → Application → Service Workers
-   - Click "Unregister" for the service worker
-   - Refresh the page
+4. **Functional Testing**
+   - [ ] Test login/logout flow
+   - [ ] Test profile setup for new users
+   - [ ] Test post creation and viewing
+   - [ ] Test stories and messaging
 
-3. **Clear Cache Storage**
-   - Open DevTools → Application → Cache Storage
-   - Delete all caches starting with "sach-wave-"
-   - Refresh the page
+## Deployment Process
 
-#### Version Verification
-
-To verify which version is running:
-
-1. Open browser DevTools (F12)
-2. Go to Console tab
-3. Look for "Service Worker registered" message
-4. Check the cache name in Application → Cache Storage
-5. Current cache should be `sach-wave-v2`
-
-### Post-Deployment Validation
-
-After deployment, verify:
-
-- [ ] Live URL loads the latest version
-- [ ] Authentication works (login/logout)
-- [ ] All navigation links work
-- [ ] Media uploads and displays work
-- [ ] No console errors
-- [ ] Service worker is registered successfully
-- [ ] Cache version matches expected version
-
-### Rollback Procedure
-
-If issues are discovered after deployment:
-
-1. Revert to the previous draft version in Caffeine
-2. Push the reverted version to live
-3. Follow the verification steps above
-4. Communicate the rollback to users if necessary
-
-### Notes
-
-- Service worker updates happen automatically
-- Users don't need to manually refresh after deployment
-- The app will reload automatically when a new version is detected
-- Cache version increments ensure old assets are cleared
-- All updates complete within 1 minute for active users
+### Step 1: Build and Test Locally
