@@ -203,7 +203,7 @@ export interface backendInterface {
     getConversations(): Promise<Array<[Principal, Message]>>;
     getNotifications(): Promise<Array<Notification>>;
     getPostsByUser(user: Principal): Promise<Array<Post>>;
-    getRoleBadge(caller: Principal): Promise<UserRole>;
+    getRoleBadge(user: Principal): Promise<UserRole>;
     getUnreadNotificationCount(): Promise<bigint>;
     getUser(user: Principal): Promise<UserProfile>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;

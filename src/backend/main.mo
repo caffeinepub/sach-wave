@@ -12,7 +12,6 @@ import MixinStorage "blob-storage/Mixin";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-
 actor {
   include MixinStorage();
   let accessControlState = AccessControl.initState();
@@ -198,14 +197,23 @@ actor {
   };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
+    };
     userProfiles.get(caller);
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
     userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
     if (isUserBanned(caller)) {
       Runtime.trap("Unauthorized: Banned users cannot update profiles");
     };
@@ -223,6 +231,9 @@ actor {
   };
 
   public shared ({ caller }) func updateLastSeen() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update last seen");
+    };
     let user = switch (userProfiles.get(caller)) {
       case (null) { Runtime.trap("User not found") };
       case (?user) { user };
@@ -650,11 +661,11 @@ actor {
     userProfiles.add(user, { targetUser with role = #user });
   };
 
-  public query ({ caller }) func getRoleBadge(caller : Principal) : async UserRole {
-    let user = switch (userProfiles.get(caller)) {
+  public query ({ caller }) func getRoleBadge(user : Principal) : async UserRole {
+    let userProfile = switch (userProfiles.get(user)) {
       case (null) { return #user };
-      case (?profile) { return profile.role };
+      case (?profile) { profile };
     };
-    user.role;
+    userProfile.role;
   };
 };

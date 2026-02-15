@@ -1,4 +1,5 @@
-const CACHE_NAME = 'sach-wave-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `sach-wave-${CACHE_VERSION}`;
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -17,6 +18,7 @@ self.addEventListener('install', (event) => {
       });
     })
   );
+  // Skip waiting to activate immediately when a new version is available
   self.skipWaiting();
 });
 
@@ -31,7 +33,15 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  // Take control of all clients immediately
   self.clients.claim();
+});
+
+// Message handler for skip-waiting requests
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Fetch event - serve from cache, fallback to network

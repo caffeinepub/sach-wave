@@ -37,8 +37,9 @@
   "frontend/src/hooks/usePatchedActor.ts": "Actor hook that creates anonymous/authenticated backend actors with retry logic and exposes isError, error, and refetch for non-refresh error recovery.",
   "frontend/src/utils/accessCodeGate.ts": "Utility functions for managing access code gate state in localStorage, validating the code \"sach26\", and locking/unlocking the app.",
   "frontend/src/pages/access/AccessCodeGatePage.tsx": "Access code gate page with premium glass styling that blocks app entry until correct code is entered, supporting both Enter key and button submission with English error messages.",
-  "frontend/src/utils/pwa.ts": "PWA utility that registers the service worker from editable frontend code with error handling and update detection.",
+  "frontend/src/utils/pwa.ts": "PWA utility that registers the service worker with automatic update detection, periodic update checks every minute, controlled skip-waiting activation, and automatic page reload when new versions are available.",
   "frontend/index.html": "HTML entry point with PWA manifest link, theme-color meta tag, and apple-touch-icon for installability.",
   "frontend/public/manifest.webmanifest": "PWA web app manifest defining app name, icons, display mode, theme colors, and orientation for installability.",
-  "frontend/public/sw.js": "Service worker providing offline support by caching static assets and serving them when offline with cache-first strategy for the app shell."
+  "frontend/public/sw.js": "Service worker with versioned cache management (v2), automatic skip-waiting on install, message handler for controlled activation, and comprehensive cache cleanup to ensure live deployments serve the latest build.",
+  "frontend/DEPLOYMENT.md": "Comprehensive deployment guide with pre-deployment checklist, step-by-step promotion process, service worker update behavior explanation, troubleshooting steps for stale cache issues, and post-deployment validation checklist."
 }

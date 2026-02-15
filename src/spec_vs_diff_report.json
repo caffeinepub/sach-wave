@@ -1,35 +1,63 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-14T21:39:37.476Z",
-  "summary": "Diff implements new startup diagnostics and error UI (StartupScreen + utils/startup.ts) and makes the current-user profile query more resilient (useQueries.ts). However, key REQ-1 behaviors (working Retry that re-attempts actor init + profile fetch, and correct handling for unauthenticated users) cannot be fully verified because App.tsx is truncated in the diff summary.",
+  "generatedAt": "2026-02-15T04:07:28.738Z",
+  "summary": "Diff adds deployment documentation and implements aggressive service-worker update/reload behavior, plus substantial unrelated frontend/backend changes. It does not show any implementation that actually promotes a draft deployment to live (REQ-4), beyond describing manual steps.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Ensure the startup/auth flow provides a startup error state with a working Retry action that re-attempts both actor initialization and the current user profile query without a full page reload, and does not show the error screen for unauthenticated users.",
-      "reason": "The necessary orchestration for startup phases, error state, and Retry behavior appears to live in frontend/src/App.tsx, but the file content is truncated in the diff summary. The diff summary does not include the relevant code showing that Retry clears prior startup error state, triggers actor re-initialization, re-queries the profile, and avoids showing startup errors for unauthenticated users.",
+      "id": "REQ-4",
+      "requirement": "Promote the currently deployed draft version of the app to the live version so that the live app URL serves the latest draft build.",
+      "reason": "No code/config changes in the diff summary indicate an actual deployment promotion mechanism (e.g., CI/CD step, hosting config, CLI/script, API call, or infrastructure change) that would switch the live URL to serve the latest draft build. The only explicit mention of promotion is procedural text in a markdown guide.",
       "evidence": [
-        "frontend/src/App.tsx (truncated)"
+        "frontend/DEPLOYMENT.md"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Introduced a new hook usePatchedActor that creates an actor via React Query with retries and invalidates/refetches dependent queries when the actor changes.",
-      "reason": "REQ-1/REQ-2/REQ-3 specify behavior changes around startup flow, retries, and diagnostics, but do not explicitly request creation of a new actor hook or broad invalidation/refetch of all non-actor queries as an implementation feature.",
+      "description": "Service worker auto-update logic that checks for updates every minute, forces skip-waiting, and reloads the page on controller change.",
+      "reason": "Not requested by REQ-4 (draft-to-live promotion). This is a separate PWA runtime behavior change.",
       "evidence": [
-        "frontend/src/hooks/usePatchedActor.ts"
+        "frontend/src/utils/pwa.ts",
+        "frontend/public/sw.js"
+      ]
+    },
+    {
+      "description": "Creation of a detailed deployment guide with troubleshooting, rollback procedure, and service worker cache/version guidance.",
+      "reason": "BuildRequest asks to promote draft to live; adding documentation is not requested as part of REQ-4 implementation (and does not itself accomplish promotion).",
+      "evidence": [
+        "frontend/DEPLOYMENT.md"
+      ]
+    },
+    {
+      "description": "Substantial UI/UX redesign and feature changes (premium glassmorphism theme, badges, story viewer UI, admin dashboard changes, messages/notifications click handling, startup error handling, etc.).",
+      "reason": "Non-goal: no new product features unrelated to promoting the draft deployment to live. These appear unrelated to deployment promotion.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Backend canister/code changes in backend/main.mo (user/profile/post/story/message/notification/announcement logic and authorization/storage mixins shown).",
+      "reason": "Not requested for promoting draft deployment to live; appears to be general application logic work unrelated to deployment promotion.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Addition of project_state.json entries describing future feature requests (e.g., App Market publishing) and deployment workflow items marked pending.",
+      "reason": "Not requested by REQ-4; also mentions App Market publishing which is explicitly a non-goal.",
+      "evidence": [
+        "project_state.json"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/system/StartupScreen.tsx",
-    "frontend/src/hooks/usePatchedActor.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/utils/startup.ts",
+    "frontend/DEPLOYMENT.md",
+    "frontend/public/sw.js",
+    "frontend/src/utils/pwa.ts",
     "project_state.json"
   ]
 }

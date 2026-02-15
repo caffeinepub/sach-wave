@@ -1,73 +1,31 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Resilient startup profile-load flow with retry and diagnostics",
+  "title": "Promote draft deployment to live (frontend cache/update readiness)",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Ensure startup/auth flow can recover from intermittent actor/profile load failures via in-app Retry without hard reload, while keeping unauthenticated auth-gate behavior.",
+      "id": "REQ-4",
+      "summary": "Ensure the live URL reliably serves the most recently deployed build by preventing stale PWA/service-worker caches and providing clear promotion steps.",
       "acceptanceCriteria": [
-        "When an authenticated user hits an intermittent profile-load failure, the app shows a startup error state with a working Retry action (no hard refresh required).",
-        "Clicking Retry re-attempts both actor initialization and the current user profile query and can recover to a usable app state when the network/backend is available.",
-        "The app does not incorrectly show the error screen for unauthenticated users; unauthenticated users must continue to see the normal auth gate flow."
+        "The latest draft build is promoted to live successfully.",
+        "Opening the live app URL shows the same app version and behavior as the most recent draft build.",
+        "No new 'draft-only' version remains as the active live deployment after promotion."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/usePatchedActor.ts",
+          "path": "frontend/public/sw.js",
           "operation": "modify",
-          "description": "Expose actor initialization error/status (e.g., isError/error) and a stable refetch method so the App startup flow can explicitly re-attempt actor creation on Retry (instead of relying only on invalidation with staleTime Infinity)."
+          "description": "Update service worker cache/update behavior to avoid stale assets after a draft-to-live promotion: bump cache name/versioning, add a message handler to support immediate activation (skip-waiting) when a new worker is installed, and ensure old caches are cleaned so the live URL fetches the newest build assets."
         },
         {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/utils/pwa.ts",
           "operation": "modify",
-          "description": "Refactor startup state machine to (1) treat actor initialization failures distinctly from profile loading failures, (2) avoid getting stuck in an error state by wiring Retry to explicitly refetch the patched actor and then refetch/invalidate the current-user profile query, and (3) ensure unauthenticated users never see the startup error screen unless authentication initialization itself fails. Also ensure Retry clears previous startup error state before re-attempting."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Make useGetCallerUserProfile resilient to transient actor/network failures: avoid throwing 'Actor not available', keep missing profile as null success, and apply limited retry for transient failures that surfaces to startup error after exhaustion.",
-      "acceptanceCriteria": [
-        "`useGetCallerUserProfile` no longer produces an error solely due to a short-lived actor unavailability during identity/actor transitions.",
-        "A missing profile still resolves as `null` (not an error) so the app can route to Profile Setup as intended.",
-        "Transient failures (e.g., agent/network) are retried a small number of times with a short delay, and if still failing, the app surfaces the startup error with Retry."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Update `useGetCallerUserProfile` to align with the selected authorization component’s guidance (Verify the component's usage instructions before implementing.): do not throw 'Actor not available' from queryFn; instead short-circuit safely when dependencies (actor/identity) are not ready, ensure missing-profile remains a successful `null`, and configure a limited React Query retry policy for transient/agent/network errors with short retry delay while avoiding retries for non-transient/authorization-like failures."
+          "description": "Enhance service worker registration to detect updates and trigger a controlled refresh to the newest live build (e.g., when a waiting worker exists, request skip-waiting and reload after controller change). Keep any user-facing text in English."
         },
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Adjust startup gating logic to rely on the hook’s refined loading/fetched semantics, and ensure that after hook retries are exhausted, the app transitions to a startup error state that offers Retry and can recover."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Improve diagnostics and user-facing messaging for profile-load failures: dev logging with phase + underlying error details, and clear actionable English startup error messages distinguishing backend connection vs profile loading issues.",
-      "acceptanceCriteria": [
-        "In development, console output includes the startup phase and the underlying exception details when profile loading fails.",
-        "The startup error screen message is in English and actionable (e.g., suggests retrying/checking connection) and does not leak raw stack traces to users.",
-        "The Retry action triggers the same recovery behavior as REQ-1 and clears the previous startup error state."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/utils/startup.ts",
-          "operation": "modify",
-          "description": "Extend startup logging helpers to support richer, phase-specific diagnostics (e.g., include a compact, user-safe classification like 'backend connection' vs 'profile load' while still logging full underlying error objects/stacks only in development)."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Improve startup error classification and messages: differentiate backend connection problems (actor init errors/timeouts) from profile loading problems; log the precise phase and underlying exception details in development using the startup utilities; ensure user-facing messages are concise English and actionable (retry/check connection) and never display raw stacks."
-        },
-        {
-          "path": "frontend/src/components/system/StartupScreen.tsx",
-          "operation": "modify",
-          "description": "Enhance the startup error UI to present clearer, user-facing English messaging (optionally with a short title/subtitle distinction for backend connection vs profile load) while keeping details non-technical; ensure the existing Retry action triggers the App-provided recovery behavior and that previous error state is cleared. (Uses shadcn/ui Button/Card; do not modify files under frontend/src/components/ui.)"
+          "path": "frontend/DEPLOYMENT.md",
+          "operation": "create",
+          "description": "Add concise, English documentation describing the operational steps/checklist to promote the current draft deployment to live and verify the live URL is serving the latest build (including guidance to validate service worker update behavior and hard-refresh expectations)."
         }
       ]
     }
